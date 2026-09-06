@@ -32,6 +32,7 @@ export const createProjectActions = (
   | "deleteStashItem"
   | "executeStashItem"
   | "takePendingChatSubmit"
+  | "queueChatSubmit"
 > => ({
   ...createProjectLifecycleActions(set, get),
   ...createChatActions(set, get),

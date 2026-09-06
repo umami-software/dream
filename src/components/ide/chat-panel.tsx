@@ -920,7 +920,7 @@ export const ChatPanel = ({
   }, [isActive, onActivateChat]);
 
   const handleSubmit = useCallback(
-    async (prompt: PromptInputMessage) => {
+    async (prompt: PromptInputMessage, preserveDraft = false) => {
       if (isProcessing) {
         throw new Error(chatT("alreadyStreaming"));
       }
@@ -1009,7 +1009,7 @@ export const ChatPanel = ({
       };
       resetPromptHistory();
 
-      setPromptText("");
+      if (!preserveDraft) setPromptText("");
       useIdeStore.getState().setChatStreaming(submittedChatId, true);
       if (shouldGenerateTitle) {
         setChatTitleGenerating(submittedChatId, true);
@@ -1117,7 +1117,8 @@ export const ChatPanel = ({
           },
         );
         scrollConversationToBottom();
-        void sendPromise.finally(finishStreaming);
+        void sendPromise.finally(finishStreaming).catch(() => {});
+        return true;
       } catch (error) {
         finishStreaming();
         throw error;
@@ -1170,11 +1171,32 @@ export const ChatPanel = ({
         return;
       }
 
-      void handleSubmitRef.current({
-        files: [],
-        references: nextSubmit.references,
-        text: nextSubmit.text,
-      });
+      const restoreSubmittedMessage = () => {
+        if (nextSubmit.preserveDraft)
+          setPromptText((current) =>
+            [current, nextSubmit.text].filter(Boolean).join("\n\n"),
+          );
+      };
+      void handleSubmitRef
+        .current(
+          {
+            files: [],
+            references: nextSubmit.references,
+            text: nextSubmit.text,
+          },
+          nextSubmit.preserveDraft,
+        )
+        .then((submitted) => {
+          if (!submitted) restoreSubmittedMessage();
+        })
+        .catch((error) => {
+          restoreSubmittedMessage();
+          setLocalError(
+            error instanceof Error
+              ? error.message
+              : "Unable to send the message.",
+          );
+        });
     });
 
     return () => {
@@ -1411,7 +1433,9 @@ export const ChatPanel = ({
             }));
           }}
           onStop={stop}
-          onSubmit={handleSubmit}
+          onSubmit={async (prompt) => {
+            await handleSubmit(prompt);
+          }}
           promptDomId={promptDomId}
           promptInputDomId={promptInputDomId}
           promptText={promptText}

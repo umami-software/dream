@@ -155,6 +155,7 @@ export interface IdeState {
   ) => void;
   deleteStashItem: (projectId: string, itemId: string) => void;
   executeStashItem: (projectId: string, itemId: string) => string | null;
+  queueChatSubmit: (chatId: string, submission: PendingChatSubmit) => boolean;
   takePendingChatSubmit: (chatId: string) => PendingChatSubmit | null;
 
   // Actions - panels

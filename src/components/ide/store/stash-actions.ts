@@ -17,6 +17,7 @@ export const createStashActions = (
   | "deleteStashItem"
   | "executeStashItem"
   | "takePendingChatSubmit"
+  | "queueChatSubmit"
 > => ({
   addStashItem: (projectId, item) => {
     const state = get();
@@ -151,6 +152,29 @@ export const createStashActions = (
     }));
 
     return chatId;
+  },
+
+  queueChatSubmit: (chatId, submission) => {
+    const state = get();
+    const chat = state.chats.find(
+      (entry) => entry.id === chatId && entry.deletedAt === null,
+    );
+    if (
+      !chat ||
+      chat.projectId !== state.activeProjectId ||
+      state.streamingChatIds[chatId] ||
+      state.pendingChatSubmitByChatId[chatId] ||
+      (!submission.text.trim() && submission.references.length === 0)
+    )
+      return false;
+    set({
+      pendingChatSubmitByChatId: {
+        ...state.pendingChatSubmitByChatId,
+        [chatId]: submission,
+      },
+    });
+    get().setActiveChatId(chat.projectId, chatId);
+    return true;
   },
 
   takePendingChatSubmit: (chatId) => {

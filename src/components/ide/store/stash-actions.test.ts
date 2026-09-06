@@ -141,3 +141,69 @@ test("executeStashItem adds a chat beside open chats in multi-chat mode", () => 
   assert.deepEqual(openAfter, [...openBefore, chatId]);
   assert.equal(store.getState().projects[0]?.ui.activeChatId, chatId);
 });
+
+test("feedback is handed to an existing chat immediately without a mounted send handler", () => {
+  const { project, store } = createTestStore();
+  const first = store.getState().addChat(project.id);
+  const second = store
+    .getState()
+    .addChat(project.id, undefined, { forceNew: true });
+  assert.ok(first);
+  assert.ok(second);
+  // The chat can receive the handoff before its history or component is loaded.
+  store.setState({ messagesByChatId: {} });
+  const submission = {
+    text: "Review these changed lines",
+    references: [],
+    preserveDraft: true,
+  };
+  assert.equal(store.getState().queueChatSubmit(first, submission), true);
+  assert.equal(store.getState().projects[0].ui.activeChatId, first);
+  assert.deepEqual(
+    store.getState().pendingChatSubmitByChatId[first],
+    submission,
+  );
+  assert.equal(store.getState().pendingChatSubmitByChatId[second], undefined);
+  assert.deepEqual(store.getState().takePendingChatSubmit(first), submission);
+  assert.equal(store.getState().takePendingChatSubmit(first), null);
+});
+
+test("new chats receive feedback through the regular submission flow", () => {
+  const { project, store } = createTestStore();
+  const chatId = store
+    .getState()
+    .addChat(project.id, undefined, { forceNew: true });
+  assert.ok(chatId);
+  assert.equal(
+    store.getState().queueChatSubmit(chatId, {
+      text: "feedback",
+      references: [],
+      preserveDraft: true,
+    }),
+    true,
+  );
+  assert.equal(
+    store.getState().takePendingChatSubmit(chatId)?.text,
+    "feedback",
+  );
+});
+
+test("feedback never overwrites a pending submission or sends to a busy or inactive chat", () => {
+  const { project, store } = createTestStore();
+  const chatId = store.getState().addChat(project.id);
+  assert.ok(chatId);
+  const first = { text: "first", references: [] };
+  assert.equal(store.getState().queueChatSubmit(chatId, first), true);
+  assert.equal(
+    store
+      .getState()
+      .queueChatSubmit(chatId, { text: "second", references: [] }),
+    false,
+  );
+  assert.deepEqual(store.getState().takePendingChatSubmit(chatId), first);
+  store.setState({ streamingChatIds: { [chatId]: true } });
+  assert.equal(store.getState().queueChatSubmit(chatId, first), false);
+  store.setState({ streamingChatIds: {}, activeProjectId: null });
+  assert.equal(store.getState().queueChatSubmit(chatId, first), false);
+  assert.equal(store.getState().queueChatSubmit("missing-chat", first), false);
+});

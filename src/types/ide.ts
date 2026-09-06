@@ -92,6 +92,7 @@ export interface StashItem {
 }
 
 export interface PendingChatSubmit {
+  preserveDraft?: boolean;
   references: ProjectReference[];
   text: string;
 }

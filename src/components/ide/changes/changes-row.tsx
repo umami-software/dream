@@ -1,13 +1,7 @@
 import { ChevronDown, ChevronRight, Undo } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-import type { BundledLanguage } from "shiki";
-import {
-  CodeBlock,
-  CodeBlockActions,
-  CodeBlockCopyButton,
-  CodeBlockHeader,
-} from "@/components/ai-elements/code-block";
+import { CodeBlockCopyButton } from "@/components/ai-elements/code-block";
 import { Spinner } from "@/components/ui/spinner";
 import { cn } from "@/lib/utils";
 import type {
@@ -49,34 +43,6 @@ const DiffEmptyState = ({ diff }: { diff: string }) => {
       {panelsT("noDiffOutput")}
     </pre>
   );
-};
-
-const inferDiffPreviewLanguage = (filePath: string): BundledLanguage => {
-  const extension = filePath.split(".").pop()?.toLowerCase() ?? "";
-  const languages: Record<string, BundledLanguage> = {
-    c: "c",
-    cpp: "cpp",
-    css: "css",
-    go: "go",
-    html: "html",
-    java: "java",
-    js: "javascript",
-    json: "json",
-    jsx: "jsx",
-    md: "markdown",
-    mjs: "javascript",
-    py: "python",
-    rs: "rust",
-    sh: "bash",
-    sql: "sql",
-    ts: "typescript",
-    tsx: "tsx",
-    txt: "log",
-    yml: "yaml",
-    yaml: "yaml",
-  };
-
-  return languages[extension] ?? "log";
 };
 
 const IMAGE_EXTENSIONS = new Set([
@@ -205,6 +171,7 @@ const ExpandedDiffBody = ({
   forceRenderDiff,
   mode,
   onForceRenderDiff,
+  projectId,
   projectPath,
   wordWrap,
 }: {
@@ -215,6 +182,7 @@ const ExpandedDiffBody = ({
   forceRenderDiff: boolean;
   mode: DiffViewMode;
   onForceRenderDiff: () => void;
+  projectId: string;
   projectPath: string;
   wordWrap: boolean;
 }) => {
@@ -244,22 +212,6 @@ const ExpandedDiffBody = ({
     );
   }
 
-  const showAddedFileContents =
-    !!diff.parsedDiff &&
-    diff.parsedDiff.type === "new" &&
-    diff.parsedDiff.deletionLines.length === 0 &&
-    (change.status === "untracked" || change.status === "added");
-  const addedFileContents = showAddedFileContents
-    ? (diff.parsedDiff?.additionLines.join("") ?? "")
-    : null;
-  const showDeletedFileContents =
-    !!diff.parsedDiff &&
-    diff.parsedDiff.type === "deleted" &&
-    diff.parsedDiff.additionLines.length === 0 &&
-    change.status === "deleted";
-  const deletedFileContents = showDeletedFileContents
-    ? (diff.parsedDiff?.deletionLines.join("") ?? "")
-    : null;
   const showDeletedImage =
     change.status === "deleted" && isImageFile(change.path);
   const changedLineCount = change.addedLines + change.removedLines;
@@ -293,34 +245,29 @@ const ExpandedDiffBody = ({
             onRenderAnyway={onForceRenderDiff}
           />
         ) : !showDeletedImage && diff.diff.trim().length > 0 ? (
-          (showAddedFileContents && addedFileContents !== null) ||
-          (showDeletedFileContents && deletedFileContents !== null) ? (
-            <CodeBlock
-              className="dream-diff-viewer w-full rounded-none border-0"
-              code={addedFileContents ?? deletedFileContents ?? ""}
-              language={inferDiffPreviewLanguage(change.path)}
-              showLineNumbers
-              startingLineNumber={1}
-              style={{ contentVisibility: "visible" }}
-              wordWrap={wordWrap}
-            >
-              {showDeletedFileContents ? (
-                <CodeBlockHeader className="flex shrink-0 justify-end border-0 bg-transparent px-3 py-2">
-                  <CodeBlockActions>
-                    <CodeBlockCopyButton />
-                  </CodeBlockActions>
-                </CodeBlockHeader>
+          diff.parsedDiff ? (
+            <>
+              {diff.parsedDiff.type === "deleted" ? (
+                <div className="flex justify-end px-3 py-2">
+                  <CodeBlockCopyButton
+                    text={diff.parsedDiff.deletionLines.join("")}
+                  />
+                </div>
               ) : null}
-            </CodeBlock>
-          ) : diff.parsedDiff ? (
-            <IdeDiffViewer
-              changedLineCount={changedLineCount}
-              className={wordWrap ? "min-w-0" : "min-w-[720px]"}
-              diffStyle={mode}
-              fileDiff={diff.parsedDiff}
-              largeDiffGuardEnabled={false}
-              wordWrap={wordWrap}
-            />
+              <IdeDiffViewer
+                changedLineCount={changedLineCount}
+                className={wordWrap ? "min-w-0" : "min-w-[720px]"}
+                diffStyle={mode}
+                fileDiff={diff.parsedDiff}
+                feedback={{
+                  projectId,
+                  filePath: change.path,
+                  previousPath: change.previousPath,
+                }}
+                largeDiffGuardEnabled={false}
+                wordWrap={wordWrap}
+              />
+            </>
           ) : (
             <pre
               className={cn(
@@ -353,6 +300,7 @@ export const ChangesRow = ({
   onForceRenderDiff,
   onRevert,
   onToggle,
+  projectId,
   projectPath,
   reverting,
   wordWrap,
@@ -367,6 +315,7 @@ export const ChangesRow = ({
   onForceRenderDiff: () => void;
   onRevert: () => void;
   onToggle: () => void;
+  projectId: string;
   projectPath: string;
   reverting: boolean;
   wordWrap: boolean;
@@ -468,6 +417,7 @@ export const ChangesRow = ({
           forceRenderDiff={forceRenderDiff}
           mode={mode}
           onForceRenderDiff={onForceRenderDiff}
+          projectId={projectId}
           projectPath={projectPath}
           wordWrap={wordWrap}
         />

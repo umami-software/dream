@@ -4,6 +4,10 @@ import { useTheme } from "next-themes";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import {
+  type DiffFeedbackTarget,
+  InlineDiffFeedback,
+} from "./inline-diff-feedback";
 
 type DiffViewMode = "unified" | "split";
 type PierreDiffOptions = NonNullable<FileDiffProps<undefined>["options"]>;
@@ -80,6 +84,7 @@ export const IdeDiffViewer = ({
   className,
   diffStyle = "unified",
   fileDiff,
+  feedback,
   largeDiffGuardEnabled = true,
   renderChangedLineLimit = DIFF_RENDER_CHANGED_LINE_LIMIT,
   wordWrap = false,
@@ -88,6 +93,7 @@ export const IdeDiffViewer = ({
   className?: string;
   diffStyle?: DiffViewMode;
   fileDiff: ParsedFileDiff;
+  feedback?: DiffFeedbackTarget;
   largeDiffGuardEnabled?: boolean;
   renderChangedLineLimit?: number;
   wordWrap?: boolean;
@@ -132,11 +138,19 @@ export const IdeDiffViewer = ({
 
   return (
     <div className={cn("dream-diff-surface", className)}>
-      <FileDiff
-        className="dream-diff-viewer w-full min-w-0"
-        fileDiff={fileDiff}
-        options={diffOptions}
-      />
+      {feedback ? (
+        <InlineDiffFeedback
+          fileDiff={fileDiff}
+          options={diffOptions}
+          target={feedback}
+        />
+      ) : (
+        <FileDiff
+          className="dream-diff-viewer w-full min-w-0"
+          fileDiff={fileDiff}
+          options={diffOptions}
+        />
+      )}
     </div>
   );
 };

@@ -857,11 +857,12 @@ const ChangesPanelImpl = ({
                 diffLoading={projectDiffLoading[change.path] ?? false}
                 expanded={expandedPathSet.has(change.path)}
                 forceRenderDiff={forcedRenderedDiffPathSet.has(change.path)}
-                key={change.path}
+                key={`${activeProject.id}:${change.path}`}
                 mode={diffViewMode}
                 onForceRenderDiff={() => handleForceRenderDiff(change.path)}
                 onRevert={() => handleRevertFile(change)}
                 onToggle={() => handleTogglePath(change.path)}
+                projectId={activeProject.id}
                 projectPath={activeProject.path}
                 reverting={revertingPaths[change.path] ?? false}
                 wordWrap={wordWrapEnabled}
