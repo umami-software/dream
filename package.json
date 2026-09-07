@@ -9,7 +9,7 @@
     "build": "pnpm package:dir",
     "vite:dev": "vite --host 127.0.0.1 --port 3210 --strictPort",
     "vite:build": "pnpm test:update-button-styles && vite build",
-    "electron:dev": "node scripts/prepare-electron-dev-app.mjs && cross-env NODE_ENV=development ELECTRON_DISABLE_SECURITY_WARNINGS=true electron electron/main.js",
+    "electron:dev": "node scripts/prepare-electron-dev-app.mjs && cross-env NODE_ENV=development ELECTRON_DISABLE_SECURITY_WARNINGS=true DREAM_ENABLE_DEV_UPDATES=0 electron electron/main.js",
     "electron:dev:update": "node scripts/prepare-electron-dev-app.mjs && cross-env NODE_ENV=development ELECTRON_DISABLE_SECURITY_WARNINGS=true DREAM_ENABLE_DEV_UPDATES=1 DREAM_DEV_UPDATE_CURRENT_VERSION=0.1.0 electron electron/main.js",
     "dev:update": "pnpm electron:dev:update",
     "db:generate": "drizzle-kit generate",
