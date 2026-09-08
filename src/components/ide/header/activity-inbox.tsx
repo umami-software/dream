@@ -1,5 +1,6 @@
 import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatusDot } from "@/components/ui/status-dot";
 import { cn } from "@/lib/utils";
@@ -9,7 +10,6 @@ import { formatLastActiveTime } from "../activity-time";
 import { PROVIDER_LABELS } from "../chat/chat-message";
 import { AppShellPlaceholder } from "../ide-helpers";
 import { useIdeStore } from "../ide-store";
-import { LoadingState } from "../loading-state";
 import {
   BROWSER_PANEL_MIN_WIDTH_PX,
   CHAT_HISTORY_PANEL_MAX_WIDTH_PX,
@@ -64,10 +64,7 @@ export function ActivityInbox() {
             project,
             entry,
             updatedAt,
-            status:
-              entry?.status === "finished" && !completedChatIds[chat.id]
-                ? ("idle" as const)
-                : (entry?.status ?? ("idle" as const)),
+            status: entry?.status ?? ("idle" as const),
           },
         ];
       })
@@ -75,7 +72,7 @@ export function ActivityInbox() {
         (a, b) =>
           b.updatedAt - a.updatedAt || a.chat.id.localeCompare(b.chat.id),
       );
-  }, [chats, entries, projects, hydrated, completedChatIds]);
+  }, [chats, entries, projects, hydrated]);
 
   useEffect(() => {
     if (!open) return;
@@ -143,21 +140,25 @@ export function ActivityInbox() {
                         aria-current={selected ? true : undefined}
                       >
                         <span className="flex h-5 w-4 shrink-0 items-center justify-center">
-                          {status === "running" ? (
-                            <LoadingState aria-label={t("running")} compact />
-                          ) : (
-                            <StatusDot
-                              aria-label={t(status)}
-                              title={t(status)}
-                              color={status === "finished" ? "green" : "amber"}
-                              pulse={status === "waiting"}
-                              className={
-                                status === "idle"
-                                  ? "bg-muted-foreground/40"
-                                  : undefined
-                              }
-                            />
-                          )}
+                          <StatusDot
+                            aria-label={t(status)}
+                            title={t(status)}
+                            color={
+                              status === "running"
+                                ? "blue"
+                                : status === "finished"
+                                  ? "green"
+                                  : "amber"
+                            }
+                            pulse={status === "running" || status === "waiting"}
+                            className={cn(
+                              (status === "idle" ||
+                                (status === "finished" &&
+                                  !completedChatIds[chat.id])) &&
+                                "bg-muted-foreground/40",
+                              status === "failed" && "bg-destructive",
+                            )}
+                          />
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
@@ -186,9 +187,29 @@ export function ActivityInbox() {
                               : ""}{" "}
                             · {PROVIDER_LABELS[chat.provider]}
                           </p>
-                          {status !== "idle" ? (
-                            <p className="mt-1.5 line-clamp-2 break-words text-sm text-muted-foreground">
-                              {entry?.detail || t(`${status}Detail`)}
+                          <Badge
+                            variant={
+                              status === "failed" ? "destructive" : "secondary"
+                            }
+                            className={cn(
+                              "mt-1.5",
+                              status === "running"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                : status === "finished"
+                                  ? "bg-success-highlight/10 text-success-highlight"
+                                  : status === "failed"
+                                    ? "text-destructive"
+                                    : status === "waiting" ||
+                                        status === "interrupted"
+                                      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                      : "text-muted-foreground",
+                            )}
+                          >
+                            {t(status)}
+                          </Badge>
+                          {entry?.detail ? (
+                            <p className="mt-0.5 line-clamp-2 break-words text-sm text-muted-foreground">
+                              {entry.detail}
                             </p>
                           ) : null}
                         </div>

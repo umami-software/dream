@@ -29,7 +29,6 @@ import type {
 import { formatLastActiveTime } from "./activity-time";
 import { normalizeProjectPathKey } from "./ide-state";
 import { useIdeStore } from "./ide-store";
-import { LoadingState } from "./loading-state";
 
 const readResponseText = async (response: Response, fallback: string) => {
   const text = await response.text();
@@ -421,9 +420,9 @@ export const ProjectSidebar = ({
                   chat.id !== activeChatId;
                 const lastActiveAt = chat.updatedAt || chat.createdAt;
                 const statusIndicator = isStreaming ? (
-                  <LoadingState
+                  <StatusDot
                     aria-label={projectsT("chatStreaming")}
-                    compact
+                    color="blue"
                   />
                 ) : isCompleted ? (
                   <StatusDot
