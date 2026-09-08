@@ -8,7 +8,6 @@ export const activityMessages = {
     interrupted: "Interrupted",
     idle: "Idle",
     open: "Open chat",
-    changes: "View changes",
     empty: "No open chats.",
     waitingDetail: "Waiting for your answer or approval",
     runningDetail: "Agent is working",

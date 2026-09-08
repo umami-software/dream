@@ -26,46 +26,10 @@ import type {
   ProjectGitWorktreeInfo,
   ProjectGitWorktreesResponse,
 } from "@/types/ide";
+import { formatLastActiveTime } from "./activity-time";
 import { normalizeProjectPathKey } from "./ide-state";
 import { useIdeStore } from "./ide-store";
 import { LoadingState } from "./loading-state";
-
-const formatLastActiveTime = (
-  value: string,
-  formatter: Intl.RelativeTimeFormat,
-) => {
-  const timestamp = Date.parse(value);
-  if (Number.isNaN(timestamp)) {
-    return "";
-  }
-
-  const deltaSeconds = Math.max(0, Math.floor((Date.now() - timestamp) / 1000));
-  if (deltaSeconds < 60) {
-    return formatter.format(0, "second");
-  }
-
-  const deltaMinutes = Math.floor(deltaSeconds / 60);
-  if (deltaMinutes < 60) {
-    return formatter.format(-deltaMinutes, "minute");
-  }
-
-  const deltaHours = Math.floor(deltaMinutes / 60);
-  if (deltaHours < 24) {
-    return formatter.format(-deltaHours, "hour");
-  }
-
-  const deltaDays = Math.floor(deltaHours / 24);
-  if (deltaDays < 30) {
-    return formatter.format(-deltaDays, "day");
-  }
-
-  const deltaMonths = Math.floor(deltaDays / 30);
-  if (deltaMonths < 12) {
-    return formatter.format(-deltaMonths, "month");
-  }
-
-  return formatter.format(-Math.floor(deltaMonths / 12), "year");
-};
 
 const readResponseText = async (response: Response, fallback: string) => {
   const text = await response.text();
@@ -362,7 +326,7 @@ export const ProjectSidebar = ({
         <div className="space-y-4 px-2 pb-3">
           {worktrees.length > 0 || worktreesLoading ? (
             <section className="space-y-1">
-              <div className="flex items-center gap-2 px-1 font-medium text-muted-foreground text-xs">
+              <div className="flex items-center gap-2 px-1 font-medium text-muted-foreground text-sm">
                 <FolderTree className="size-3.5" />
                 {worktreeT("worktrees")}
               </div>
@@ -398,7 +362,7 @@ export const ProjectSidebar = ({
                           <p className="truncate text-sm leading-5">
                             {worktree.branch ?? worktreeT("detachedWorktree")}
                           </p>
-                          <p className="truncate text-muted-foreground text-xs">
+                          <p className="truncate text-muted-foreground text-sm">
                             {worktree.path}
                           </p>
                         </div>
@@ -432,7 +396,7 @@ export const ProjectSidebar = ({
                 );
               })}
               {worktreeError ? (
-                <p className="px-2 text-destructive text-xs">{worktreeError}</p>
+                <p className="px-2 text-destructive text-sm">{worktreeError}</p>
               ) : null}
             </section>
           ) : null}

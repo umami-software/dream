@@ -1,14 +1,15 @@
-import { useFormatter, useTranslations } from "next-intl";
+import { useFormatter, useLocale, useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatusDot } from "@/components/ui/status-dot";
 import { cn } from "@/lib/utils";
 import type { ChatConfig } from "@/types/ide";
 import { type ChatActivity, useActivityStore } from "../activity-store";
+import { formatLastActiveTime } from "../activity-time";
 import { PROVIDER_LABELS } from "../chat/chat-message";
 import { AppShellPlaceholder } from "../ide-helpers";
 import { useIdeStore } from "../ide-store";
+import { LoadingState } from "../loading-state";
 import {
   BROWSER_PANEL_MIN_WIDTH_PX,
   CHAT_HISTORY_PANEL_MAX_WIDTH_PX,
@@ -19,6 +20,12 @@ import { WorkspaceSlidingPanel } from "../workspace/sliding-panel";
 export function ActivityInbox() {
   const t = useTranslations("activity");
   const format = useFormatter();
+  const locale = useLocale();
+  const relativeTimeFormatter = useMemo(
+    () =>
+      new Intl.RelativeTimeFormat(locale, { numeric: "auto", style: "narrow" }),
+    [locale],
+  );
   const open = useActivityStore((s) => s.open);
   const [now, setNow] = useState(() => new Date());
   const [width, setWidth] = useState(340);
@@ -28,6 +35,7 @@ export function ActivityInbox() {
   const chats = useIdeStore((s) => s.chats);
   const projects = useIdeStore((s) => s.projects);
   const activeProjectId = useIdeStore((s) => s.activeProjectId);
+  const completedChatIds = useIdeStore((s) => s.completedChatIds);
   const hydrated = useIdeStore((s) => s.stateHydrated);
 
   const rows = useMemo(() => {
@@ -56,7 +64,10 @@ export function ActivityInbox() {
             project,
             entry,
             updatedAt,
-            status: entry?.status ?? ("idle" as const),
+            status:
+              entry?.status === "finished" && !completedChatIds[chat.id]
+                ? ("idle" as const)
+                : (entry?.status ?? ("idle" as const)),
           },
         ];
       })
@@ -64,7 +75,7 @@ export function ActivityInbox() {
         (a, b) =>
           b.updatedAt - a.updatedAt || a.chat.id.localeCompare(b.chat.id),
       );
-  }, [chats, entries, projects, hydrated]);
+  }, [chats, entries, projects, hydrated, completedChatIds]);
 
   useEffect(() => {
     if (!open) return;
@@ -73,14 +84,10 @@ export function ActivityInbox() {
     return () => clearInterval(timer);
   }, [open]);
 
-  const openChat = (chat: ChatConfig, changes = false) => {
+  const openChat = (chat: ChatConfig) => {
     const store = useIdeStore.getState();
     store.setActiveProjectId(chat.projectId);
     store.setActiveChatId(chat.projectId, chat.id);
-    if (changes) {
-      store.setProjectRightPanelView(chat.projectId, "changes");
-      store.setProjectRightPanelOpen(chat.projectId, true);
-    }
   };
 
   return (
@@ -136,23 +143,21 @@ export function ActivityInbox() {
                         aria-current={selected ? true : undefined}
                       >
                         <span className="flex h-5 w-4 shrink-0 items-center justify-center">
-                          <StatusDot
-                            aria-label={t(status)}
-                            title={t(status)}
-                            color={
-                              status === "running"
-                                ? "blue"
-                                : status === "finished"
-                                  ? "green"
-                                  : "amber"
-                            }
-                            pulse={status === "running" || status === "waiting"}
-                            className={
-                              status === "idle"
-                                ? "bg-muted-foreground/40"
-                                : undefined
-                            }
-                          />
+                          {status === "running" ? (
+                            <LoadingState aria-label={t("running")} compact />
+                          ) : (
+                            <StatusDot
+                              aria-label={t(status)}
+                              title={t(status)}
+                              color={status === "finished" ? "green" : "amber"}
+                              pulse={status === "waiting"}
+                              className={
+                                status === "idle"
+                                  ? "bg-muted-foreground/40"
+                                  : undefined
+                              }
+                            />
+                          )}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-start justify-between gap-2">
@@ -160,17 +165,21 @@ export function ActivityInbox() {
                               {chat.title}
                             </span>
                             <time
-                              className="shrink-0 text-[10px] text-muted-foreground"
+                              className="shrink-0 text-xs text-muted-foreground"
                               dateTime={new Date(updatedAt).toISOString()}
                               title={format.dateTime(updatedAt, {
                                 dateStyle: "medium",
                                 timeStyle: "short",
                               })}
                             >
-                              {format.relativeTime(updatedAt, now)}
+                              {formatLastActiveTime(
+                                updatedAt,
+                                relativeTimeFormatter,
+                                now.getTime(),
+                              )}
                             </time>
                           </div>
-                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                          <p className="mt-0.5 truncate text-sm text-muted-foreground">
                             {project.name}
                             {project.worktree
                               ? ` · ${project.worktree.branch}`
@@ -178,23 +187,12 @@ export function ActivityInbox() {
                             · {PROVIDER_LABELS[chat.provider]}
                           </p>
                           {status !== "idle" ? (
-                            <p className="mt-1.5 line-clamp-2 break-words text-xs text-muted-foreground">
+                            <p className="mt-1.5 line-clamp-2 break-words text-sm text-muted-foreground">
                               {entry?.detail || t(`${status}Detail`)}
                             </p>
                           ) : null}
                         </div>
                       </button>
-                      {status === "finished" ? (
-                        <div className="flex justify-end px-2 pb-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => openChat(chat, true)}
-                          >
-                            {t("changes")}
-                          </Button>
-                        </div>
-                      ) : null}
                     </li>
                   );
                 })}
