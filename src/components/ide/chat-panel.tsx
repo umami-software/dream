@@ -42,6 +42,8 @@ import type {
   ProjectConfig,
   ProjectReference,
 } from "@/types/ide";
+import { getActivityAttention } from "./activity-status";
+import { useActivityStore } from "./activity-store";
 import {
   getChipToolKind,
   getToolName,
@@ -516,6 +518,7 @@ export const ChatPanel = ({
     id: `chat:${chat.id}`,
     messages: chatMessages,
     onError: (error) => {
+      useActivityStore.getState().finish(chat.id, "failed", error.message);
       console.error("[chat error]", error);
 
       // The server-side onError already enriches the message, so
@@ -535,7 +538,22 @@ export const ChatPanel = ({
 
       setLocalError(chatT("unexpectedError"));
     },
-    onFinish: ({ message }) => {
+    onFinish: ({ message, isAbort, isError, isDisconnect }) => {
+      const attention = getActivityAttention([message]);
+      if (!isAbort && !isError && !isDisconnect && attention !== null) {
+        useActivityStore.getState().attention(chat.id, attention);
+      } else {
+        useActivityStore
+          .getState()
+          .finish(
+            chat.id,
+            isError
+              ? "failed"
+              : isAbort || isDisconnect
+                ? "interrupted"
+                : "finished",
+          );
+      }
       const metadata = message.metadata as ChatMessageMetadata | undefined;
       const pendingMetadata = pendingAssistantMetadataRef.current;
       pendingAssistantMetadataRef.current = null;
@@ -606,7 +624,11 @@ export const ChatPanel = ({
   }, [messages]);
 
   useEffect(() => {
-    setChatAwaitingAnswer(chat.id, chatIsAwaitingAnswer(messages));
+    const awaiting = chatIsAwaitingAnswer(messages);
+    setChatAwaitingAnswer(chat.id, awaiting);
+    useActivityStore
+      .getState()
+      .attention(chat.id, getActivityAttention(messages));
   }, [chat.id, messages, setChatAwaitingAnswer]);
 
   useEffect(
@@ -1120,6 +1142,13 @@ export const ChatPanel = ({
         void sendPromise.finally(finishStreaming).catch(() => {});
         return true;
       } catch (error) {
+        useActivityStore
+          .getState()
+          .finish(
+            submittedChatId,
+            "failed",
+            error instanceof Error ? error.message : "",
+          );
         finishStreaming();
         throw error;
       }

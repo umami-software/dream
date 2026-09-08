@@ -1,3 +1,4 @@
+import { activityMessages } from "./activity-messages";
 import type { AppLocale } from "./config";
 
 type MessageObject = Record<string, unknown>;
@@ -51,7 +52,10 @@ export const loadMessages = (locale: AppLocale): Promise<MessageObject> => {
     localeMessageLoaders[locale](),
     import("./supplemental-messages"),
   ]).then(([baseMessages, { supplementalMessages }]) =>
-    mergeMessages(baseMessages.default, supplementalMessages[locale]),
+    mergeMessages(
+      activityMessages,
+      mergeMessages(baseMessages.default, supplementalMessages[locale]),
+    ),
   );
   messageCache.set(locale, messagesPromise);
   return messagesPromise;

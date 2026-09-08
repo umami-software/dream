@@ -1,4 +1,5 @@
 import { getDesktopApi } from "@/lib/electron";
+import { useActivityStore } from "../activity-store";
 import type { IdeState, IdeStoreSet } from "./ide-store-types";
 
 export const createRuntimeActions = (
@@ -68,10 +69,16 @@ export const createRuntimeActions = (
       const nextCompletedChatIds = { ...state.completedChatIds };
 
       if (streaming) {
+        if (!state.streamingChatIds[chatId])
+          useActivityStore.getState().start(chatId);
         nextStreamingChatIds[chatId] = true;
         delete nextCompletedChatIds[chatId];
       } else {
         const wasStreaming = Boolean(state.streamingChatIds[chatId]);
+        const activity = useActivityStore.getState().entries[chatId];
+        if (wasStreaming && activity?.status === "running") {
+          useActivityStore.getState().finish(chatId, "interrupted");
+        }
         delete nextStreamingChatIds[chatId];
         delete nextAwaitingAnswerChatIds[chatId];
 

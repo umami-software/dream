@@ -2,6 +2,7 @@ import { Settings } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { ActivityButton } from "./header/activity-button";
 import { ProjectTabs } from "./header/project-tabs";
 import { HeaderUpdateButton } from "./header/update-button";
 import { WindowControls } from "./header/window-controls";
@@ -33,6 +34,7 @@ export const IdeHeader = () => {
           )}
         />
 
+        <ActivityButton />
         <ProjectTabs />
 
         <HeaderUpdateButton />

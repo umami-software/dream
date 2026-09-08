@@ -12,6 +12,7 @@ import {
 import { useUiStore } from "@/lib/ui-store";
 import { cn } from "@/lib/utils";
 import { EmptyProjectWorkspace } from "./empty-project-workspace";
+import { ActivityInbox } from "./header/activity-inbox";
 import { IdeHeader } from "./ide-header";
 import { areProjectListsEqualExceptLastUsedAt } from "./ide-state";
 import { useIdeStore } from "./ide-store";
@@ -458,41 +459,44 @@ export const IdeShell = () => {
       {!appReady && <AppLoadingScreen />}
       <IdeHeader />
 
-      <div className="relative min-h-0 flex-1 overflow-hidden">
-        {!stateHydrated ? null : (
-          <>
-            {projects.map((project) => {
-              // Keep the outgoing surface painted while React prepares the
-              // incoming workspace, then reveal and activate it atomically.
-              const active = project.id === renderedActiveProjectId;
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <ActivityInbox />
+        <div className="relative min-h-0 min-w-0 flex-1 overflow-hidden">
+          {!stateHydrated ? null : (
+            <>
+              {projects.map((project) => {
+                // Keep the outgoing surface painted while React prepares the
+                // incoming workspace, then reveal and activate it atomically.
+                const active = project.id === renderedActiveProjectId;
 
-              return (
-                <div
-                  aria-hidden={!active}
-                  className={cn(
-                    "absolute inset-0 min-h-0 bg-surface-50 dark:bg-surface-900",
-                    active
-                      ? "z-10 pointer-events-auto"
-                      : // Keep inactive workspaces painted beneath the active
-                        // one. Hiding or moving them offscreen makes Chromium
-                        // rebuild the layer when a project is selected, which
-                        // produces a blank frame during the tab switch.
-                        "z-0 pointer-events-none",
-                  )}
-                  inert={!active}
-                  key={project.id}
-                >
-                  <ProjectWorkspace active={active} project={project} />
+                return (
+                  <div
+                    aria-hidden={!active}
+                    className={cn(
+                      "absolute inset-0 min-h-0 bg-surface-50 dark:bg-surface-900",
+                      active
+                        ? "z-10 pointer-events-auto"
+                        : // Keep inactive workspaces painted beneath the active
+                          // one. Hiding or moving them offscreen makes Chromium
+                          // rebuild the layer when a project is selected, which
+                          // produces a blank frame during the tab switch.
+                          "z-0 pointer-events-none",
+                    )}
+                    inert={!active}
+                    key={project.id}
+                  >
+                    <ProjectWorkspace active={active} project={project} />
+                  </div>
+                );
+              })}
+              {!renderedActiveProjectId ? (
+                <div className="absolute inset-0 z-20 bg-surface-50 p-3 dark:bg-surface-900">
+                  <EmptyProjectWorkspace />
                 </div>
-              );
-            })}
-            {!renderedActiveProjectId ? (
-              <div className="absolute inset-0 z-20 bg-surface-50 p-3 dark:bg-surface-900">
-                <EmptyProjectWorkspace />
-              </div>
-            ) : null}
-          </>
-        )}
+              ) : null}
+            </>
+          )}
+        </div>
       </div>
 
       {settingsOpen ? (
