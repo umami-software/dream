@@ -199,7 +199,7 @@ const getCurrentGitUpstream = async (repoRoot) => {
   return upstreamResult.ok ? upstreamResult.stdout.trim() || null : null;
 };
 
-const getGitAheadBehindCounts = async (repoRoot, upstreamBranch) => {
+export const getGitAheadBehindCounts = async (repoRoot, upstreamBranch) => {
   if (!upstreamBranch) {
     return {
       aheadCount: 0,
@@ -984,7 +984,7 @@ const buildUntrackedFileDiff = async (projectPath, filePath) => {
   ].join("\n");
 };
 
-const parseSingleFileDiff = (patch) => {
+export const parseSingleFileDiff = (patch) => {
   if (typeof patch !== "string" || patch.trim().length === 0) {
     return null;
   }

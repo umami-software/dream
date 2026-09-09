@@ -10,6 +10,7 @@ import type {
   PanelVisibility,
   PendingChatSubmit,
   ProjectConfig,
+  ProjectGitWorktreeCleanupResponse,
   RightPanelView,
   StashItem,
 } from "@/types/ide";
@@ -107,6 +108,18 @@ export interface IdeState {
     },
   ) => Promise<WorktreeProjectCreationResult | null>;
   closeProject: (projectId: string) => void;
+  stopProjectTerminals: (projectId: string) => void;
+  purgeWorktreeProject: (
+    worktreePath: string,
+    options?: { activateProjectId?: string | null },
+  ) => void;
+  removeWorktreeProject: (options: {
+    deleteBranch?: boolean;
+    force?: boolean;
+    mainWorktreePath: string;
+    parentProjectId?: string | null;
+    worktreePath: string;
+  }) => Promise<ProjectGitWorktreeCleanupResponse | null>;
   updateProject: (
     projectId: string,
     updater: (project: ProjectConfig) => ProjectConfig,

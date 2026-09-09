@@ -30,14 +30,6 @@ import { formatLastActiveTime } from "./activity-time";
 import { normalizeProjectPathKey } from "./ide-state";
 import { useIdeStore } from "./ide-store";
 
-const readResponseText = async (response: Response, fallback: string) => {
-  const text = await response.text();
-  return text.trim() || fallback;
-};
-
-const isMissingWorktreeError = (message: string) =>
-  message.toLowerCase().includes("worktree was not found");
-
 const useAppManagedWorktrees = (projectPath: string, refreshKey: number) => {
   const [worktrees, setWorktrees] = useState<ProjectGitWorktreeInfo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -121,7 +113,7 @@ export const ProjectSidebar = ({
   const titleGeneratingChatIds = useIdeStore((s) => s.titleGeneratingChatIds);
   const deleteChat = useIdeStore((s) => s.deleteChat);
   const addProject = useIdeStore((s) => s.addProject);
-  const closeProject = useIdeStore((s) => s.closeProject);
+  const removeWorktreeProject = useIdeStore((s) => s.removeWorktreeProject);
   const bumpProjectGitRefreshKey = useIdeStore(
     (s) => s.bumpProjectGitRefreshKey,
   );
@@ -188,58 +180,6 @@ export const ProjectSidebar = ({
     [addProject, onChatSelect],
   );
 
-  const purgeWorktreeProjectState = useCallback(
-    (worktreePath: string) => {
-      const worktreePathKey = normalizeProjectPathKey(worktreePath);
-      const state = useIdeStore.getState();
-      const openProject = state.projects.find(
-        (item) => normalizeProjectPathKey(item.path) === worktreePathKey,
-      );
-      if (openProject) {
-        closeProject(openProject.id);
-      }
-
-      useIdeStore.setState((current) => {
-        const allRemovedProjects = [
-          ...current.projects,
-          ...current.closedProjects,
-        ].filter(
-          (item) => normalizeProjectPathKey(item.path) === worktreePathKey,
-        );
-        const removedProjectIds = new Set(
-          allRemovedProjects.map((item) => item.id),
-        );
-        if (removedProjectIds.size === 0) {
-          return current;
-        }
-
-        const removedChatIds = new Set(
-          current.chats
-            .filter((chat) => removedProjectIds.has(chat.projectId))
-            .map((chat) => chat.id),
-        );
-        const messagesByChatId = { ...current.messagesByChatId };
-        for (const chatId of removedChatIds) {
-          delete messagesByChatId[chatId];
-        }
-
-        return {
-          chats: current.chats.filter(
-            (chat) => !removedProjectIds.has(chat.projectId),
-          ),
-          closedProjects: current.closedProjects.filter(
-            (item) => normalizeProjectPathKey(item.path) !== worktreePathKey,
-          ),
-          messagesByChatId,
-          projects: current.projects.filter(
-            (item) => normalizeProjectPathKey(item.path) !== worktreePathKey,
-          ),
-        };
-      });
-    },
-    [closeProject],
-  );
-
   const handleRemoveWorktree = useCallback(async () => {
     if (!pendingRemoveWorktree) {
       return;
@@ -248,36 +188,18 @@ export const ProjectSidebar = ({
     setRemovingWorktreePath(pendingRemoveWorktree.path);
     setWorktreeError(null);
     try {
-      const response = await fetch("/api/project-git-worktree-remove", {
-        body: JSON.stringify({
-          force: false,
-          projectPath: project.path,
-          worktreePath: pendingRemoveWorktree.path,
-        }),
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
+      await removeWorktreeProject({
+        force: false,
+        mainWorktreePath: project.path,
+        worktreePath: pendingRemoveWorktree.path,
       });
-      if (!response.ok) {
-        throw new Error(
-          await readResponseText(response, worktreeT("unableToRemove")),
-        );
-      }
-
-      purgeWorktreeProjectState(pendingRemoveWorktree.path);
-      bumpProjectGitRefreshKey(project.id);
       setPendingRemoveWorktree(null);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : worktreeT("unableToRemove");
-      bumpProjectGitRefreshKey(project.id);
-      if (isMissingWorktreeError(message)) {
-        purgeWorktreeProjectState(pendingRemoveWorktree.path);
-        setPendingRemoveWorktree(null);
-        return;
-      }
-
-      setWorktreeError(message);
+      setWorktreeError(
+        error instanceof Error ? error.message : worktreeT("unableToRemove"),
+      );
     } finally {
+      bumpProjectGitRefreshKey(project.id);
       setRemovingWorktreePath(null);
     }
   }, [
@@ -285,7 +207,7 @@ export const ProjectSidebar = ({
     pendingRemoveWorktree,
     project.id,
     project.path,
-    purgeWorktreeProjectState,
+    removeWorktreeProject,
     worktreeT,
   ]);
 

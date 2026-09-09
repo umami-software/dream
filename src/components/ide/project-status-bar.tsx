@@ -13,8 +13,9 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import { useProjectGitStatus } from "@/hooks/use-project-git-status";
 import { cn } from "@/lib/utils";
-import type { ProjectConfig } from "@/types/ide";
+import type { ProjectConfig, ProjectWorktreeInfo } from "@/types/ide";
 import { BranchSwitcher } from "./branch-switcher";
+import { CompleteWorktreeDialog } from "./git-actions/complete-worktree-dialog";
 import { useIdeStore } from "./ide-store";
 import { slugifyWorktreeBranchName, WorktreeFields } from "./worktree-fields";
 
@@ -135,6 +136,7 @@ export const ProjectBranchFooter = ({
     { detail: "summary" },
   );
   const [createWorktreeOpen, setCreateWorktreeOpen] = useState(false);
+  const [completeWorktreeOpen, setCompleteWorktreeOpen] = useState(false);
 
   if (!project.worktree && !isRepo && !loading) {
     return null;
@@ -146,13 +148,13 @@ export const ProjectBranchFooter = ({
         <div className="mx-auto flex w-full max-w-[700px] justify-end">
           {project?.worktree ? (
             <Button
-              aria-label={worktreeT("worktreeLabel", {
+              aria-label={worktreeT("completeWorktreeLabel", {
                 branch: project.worktree.branch,
               })}
               className="h-7 max-w-[280px] gap-1.5 px-2 text-xs text-muted-foreground"
-              disabled
+              onClick={() => setCompleteWorktreeOpen(true)}
               size="sm"
-              title={worktreeT("worktreeLabel", {
+              title={worktreeT("completeWorktreeLabel", {
                 branch: project.worktree.branch,
               })}
               variant="ghost"
@@ -181,6 +183,13 @@ export const ProjectBranchFooter = ({
         open={createWorktreeOpen}
         project={project}
       />
+      {project.worktree ? (
+        <CompleteWorktreeDialog
+          onOpenChange={setCompleteWorktreeOpen}
+          open={completeWorktreeOpen}
+          project={project as ProjectConfig & { worktree: ProjectWorktreeInfo }}
+        />
+      ) : null}
     </>
   );
 };

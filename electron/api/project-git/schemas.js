@@ -138,3 +138,35 @@ export const projectGitPullRequestDetailsRequestSchema = z.object({
     .enum(["openai", "anthropic", "opencode", "cursor", "grok"])
     .default("openai"),
 });
+
+export const projectGitWorktreeCompareRequestSchema = z.object({
+  baseRef: nullableTrimmedStringSchema,
+  projectPath: z.string().min(1),
+});
+
+export const projectGitWorktreeCompareDiffRequestSchema =
+  projectGitWorktreeCompareRequestSchema.extend({
+    filePath: z.string().min(1),
+    previousPath: z.string().min(1).nullable(),
+    status: z.enum([
+      "modified",
+      "added",
+      "renamed",
+      "copied",
+      "deleted",
+      "untracked",
+    ]),
+  });
+
+export const projectGitWorktreeMergeRequestSchema = z.object({
+  acknowledgeUncommitted: z.boolean().default(false),
+  baseRef: nullableTrimmedStringSchema,
+  projectPath: z.string().min(1),
+});
+
+export const projectGitWorktreeCleanupRequestSchema = z.object({
+  deleteBranch: z.boolean().default(false),
+  force: z.boolean().default(false),
+  projectPath: z.string().min(1),
+  worktreePath: z.string().min(1),
+});

@@ -39,6 +39,7 @@ import { GitDeltaSummary } from "./summary";
 import { getStatusFileCount, postJson } from "./utils";
 
 export const CreatePrDialog = ({
+  baseBranch: baseBranchOverride = null,
   branch,
   onCompleted,
   onOpenChange,
@@ -49,6 +50,7 @@ export const CreatePrDialog = ({
   refreshToken,
   status,
 }: {
+  baseBranch?: string | null;
   branch: string | null;
   onCompleted: (url: string | null, openPrPage: boolean) => void;
   onOpenChange: (open: boolean) => void;
@@ -76,7 +78,7 @@ export const CreatePrDialog = ({
   const [error, setError] = useState<string | null>(null);
   const hasChanges = getStatusFileCount(status) > 0;
   const needsPush = !status?.upstreamBranch || (status.aheadCount ?? 0) > 0;
-  const baseBranch = status?.baseBranch ?? "main";
+  const baseBranch = baseBranchOverride ?? status?.baseBranch ?? "main";
   const branchError = getPullRequestBranchError(branch, baseBranch, {
     detachedHead: gitT("detachedHeadPrError"),
     sameBranch: (values) => gitT("sameBranchPrError", values),

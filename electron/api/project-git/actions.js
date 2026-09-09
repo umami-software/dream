@@ -773,7 +773,11 @@ export const pushProjectGitChanges = async (
   };
 };
 
-const getPullRequestBaseRef = async (repoRoot, remoteName, baseBranch) => {
+export const getPullRequestBaseRef = async (
+  repoRoot,
+  remoteName,
+  baseBranch,
+) => {
   if (!baseBranch) {
     return null;
   }
@@ -810,7 +814,7 @@ const parseGitPushPreviewCommit = (line) => {
   };
 };
 
-const readGitCommitCount = async (repoRoot, rangeRef) => {
+export const readGitCommitCount = async (repoRoot, rangeRef) => {
   const args = rangeRef
     ? ["rev-list", "--count", rangeRef]
     : ["rev-list", "--count", "HEAD"];
@@ -822,7 +826,7 @@ const readGitCommitCount = async (repoRoot, rangeRef) => {
   return Number.parseInt(result.stdout.trim(), 10) || 0;
 };
 
-const readGitPushPreviewCommits = async (repoRoot, rangeRef) => {
+export const readGitPushPreviewCommits = async (repoRoot, rangeRef) => {
   const args = [
     "log",
     "--max-count=50",

@@ -367,6 +367,85 @@ export interface ProjectGitRemoveWorktreeResponse {
   path: string;
 }
 
+export interface ProjectGitWorktreeCompareRequest {
+  baseRef?: string | null;
+  projectPath: string;
+}
+
+export interface ProjectGitWorktreeCompareResponse {
+  aheadCount: number;
+  baseBranch: string;
+  baseExistsLocally: boolean;
+  behindCount: number;
+  branch: string;
+  commits: ProjectGitPushPreviewCommit[];
+  compareRef: string;
+  files: ProjectGitStatusEntry[];
+  ghAvailable: boolean;
+  mainBranch: string | null;
+  mainClean: boolean;
+  mainDirtyCount: number;
+  mainInProgressOperation: boolean;
+  mainWorktreePath: string;
+  mergeBase: string | null;
+  remoteName: string | null;
+  totalCommits: number;
+  truncated: boolean;
+  upstreamBranch: string | null;
+  worktreePath: string;
+  worktreeStatus: ProjectGitStatusResponse;
+}
+
+export interface ProjectGitWorktreeCompareDiffRequest
+  extends ProjectGitWorktreeCompareRequest {
+  filePath: string;
+  previousPath: string | null;
+  status: ProjectGitChangeStatus;
+}
+
+export interface ProjectGitWorktreeMergeRequest {
+  acknowledgeUncommitted: boolean;
+  baseRef?: string | null;
+  projectPath: string;
+}
+
+export type ProjectGitWorktreeMergeResponse =
+  | {
+      baseBranch: string;
+      branch: string;
+      fastForward: boolean;
+      mainWorktreePath: string;
+      mergeCommit: string;
+      previousMainBranch: string | null;
+      status: "merged";
+    }
+  | {
+      baseBranch: string;
+      branch: string;
+      conflictingFiles: string[];
+      mainWorktreePath: string;
+      previousMainBranch: string | null;
+      status: "conflict";
+    };
+
+export interface ProjectGitWorktreeCleanupRequest {
+  deleteBranch: boolean;
+  force: boolean;
+  projectPath: string;
+  worktreePath: string;
+}
+
+export interface ProjectGitWorktreeCleanupResponse {
+  branch: string | null;
+  branchDeleted: boolean;
+  branchDeleteError: string | null;
+  path: string;
+  pruned: boolean;
+  removed: true;
+}
+
+export type WorktreeCompletionAction = "merge" | "pr" | "remove";
+
 export interface ProjectGitDiffResponse {
   branch: string | null;
   diff: string;

@@ -7,6 +7,7 @@ import {
 import type {
   ProjectConfig,
   ProjectGitCreateWorktreeResponse,
+  ProjectGitWorktreeCleanupResponse,
 } from "@/types/ide";
 import { createBranchedChatConfig } from "../chat-branching";
 import {
@@ -18,6 +19,9 @@ import {
 import { deleteTerminalScrollback } from "../terminal-scrollback";
 import { updateProjectInList, updateProjectUiInList } from ".";
 import type { IdeState, IdeStoreGet, IdeStoreSet } from "./ide-store-types";
+
+export const isMissingWorktreeError = (message: string) =>
+  message.toLowerCase().includes("worktree was not found");
 
 const touchProjectInList = (
   projects: ProjectConfig[],
@@ -39,6 +43,9 @@ export const createProjectLifecycleActions = (
   | "addProject"
   | "createWorktreeProject"
   | "closeProject"
+  | "stopProjectTerminals"
+  | "purgeWorktreeProject"
+  | "removeWorktreeProject"
   | "updateProject"
 > => ({
   setProjects: (projects: ProjectConfig[]) => {
@@ -470,13 +477,126 @@ export const createProjectLifecycleActions = (
       : null;
   },
 
-  closeProject: (projectId: string) => {
-    const terminalSessionIds = get().projectTerminalSessionIds[projectId] ?? [];
+  stopProjectTerminals: (projectId: string) => {
+    const terminalSessionIds =
+      get().projectTerminalSessionIds?.[projectId] ?? [];
     const desktopApi = getDesktopApi();
     for (const sessionId of terminalSessionIds) {
       void desktopApi?.stopTerminal(sessionId);
       deleteTerminalScrollback(sessionId);
     }
+  },
+
+  purgeWorktreeProject: (
+    worktreePath: string,
+    options: { activateProjectId?: string | null } = {},
+  ) => {
+    const worktreePathKey = normalizeProjectPathKey(worktreePath);
+    const openProject = get().projects.find(
+      (item) => normalizeProjectPathKey(item.path) === worktreePathKey,
+    );
+    if (openProject) {
+      get().closeProject(openProject.id);
+    }
+
+    set((current) => {
+      const removedProjectIds = new Set(
+        [...current.projects, ...current.closedProjects]
+          .filter(
+            (item) => normalizeProjectPathKey(item.path) === worktreePathKey,
+          )
+          .map((item) => item.id),
+      );
+      if (removedProjectIds.size === 0) {
+        return current;
+      }
+
+      const removedChatIds = new Set(
+        current.chats
+          .filter((chat) => removedProjectIds.has(chat.projectId))
+          .map((chat) => chat.id),
+      );
+      const messagesByChatId = { ...current.messagesByChatId };
+      for (const chatId of removedChatIds) {
+        delete messagesByChatId[chatId];
+      }
+
+      return {
+        chats: current.chats.filter(
+          (chat) => !removedProjectIds.has(chat.projectId),
+        ),
+        closedProjects: current.closedProjects.filter(
+          (item) => normalizeProjectPathKey(item.path) !== worktreePathKey,
+        ),
+        messagesByChatId,
+        projects: current.projects.filter(
+          (item) => normalizeProjectPathKey(item.path) !== worktreePathKey,
+        ),
+      };
+    });
+
+    const activateProjectId = options.activateProjectId ?? null;
+    if (
+      activateProjectId &&
+      get().projects.some((project) => project.id === activateProjectId)
+    ) {
+      get().setActiveProjectId(activateProjectId);
+      get().bumpProjectGitRefreshKey?.(activateProjectId);
+    }
+  },
+
+  removeWorktreeProject: async ({
+    deleteBranch = false,
+    force = false,
+    mainWorktreePath,
+    parentProjectId = null,
+    worktreePath,
+  }) => {
+    const worktreePathKey = normalizeProjectPathKey(worktreePath);
+    const openProject = get().projects.find(
+      (item) => normalizeProjectPathKey(item.path) === worktreePathKey,
+    );
+    if (openProject) {
+      get().stopProjectTerminals(openProject.id);
+    }
+
+    const response = await fetch("/api/project-git-worktree-cleanup", {
+      body: JSON.stringify({
+        deleteBranch,
+        force,
+        projectPath: mainWorktreePath,
+        worktreePath,
+      }),
+      headers: { "Content-Type": "application/json" },
+      method: "POST",
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      const message =
+        text.trim() || response.statusText || String(response.status);
+      if (!isMissingWorktreeError(message)) {
+        throw new Error(message);
+      }
+
+      get().purgeWorktreeProject(worktreePath, {
+        activateProjectId: parentProjectId,
+      });
+      return null;
+    }
+
+    const payload =
+      (await response.json()) as ProjectGitWorktreeCleanupResponse;
+    get().purgeWorktreeProject(worktreePath, {
+      activateProjectId: parentProjectId,
+    });
+    return payload;
+  },
+
+  closeProject: (projectId: string) => {
+    const terminalSessionIds =
+      get().projectTerminalSessionIds?.[projectId] ?? [];
+    get().stopProjectTerminals(projectId);
 
     set((state) => {
       const closedProject = state.projects.find(
