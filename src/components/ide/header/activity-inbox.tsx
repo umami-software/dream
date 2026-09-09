@@ -180,7 +180,7 @@ export function ActivityInbox() {
                               )}
                             </time>
                           </div>
-                          <p className="mt-0.5 truncate text-sm text-muted-foreground">
+                          <p className="mt-0.5 truncate text-xs text-muted-foreground">
                             {project.name}
                             {project.worktree
                               ? ` · ${project.worktree.branch}`

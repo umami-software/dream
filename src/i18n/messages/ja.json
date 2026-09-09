@@ -265,5 +265,16 @@
     "opencode": "OpenCode",
     "opencodeCli": "OpenCode CLI",
     "claudeCodeCli": "Claude Code CLI"
+  },
+  "activity": {
+    "title": "アクティビティ",
+    "running": "作業中",
+    "waiting": "入力が必要",
+    "finished": "完了",
+    "failed": "失敗",
+    "interrupted": "中断",
+    "idle": "待機中",
+    "open": "チャットを開く",
+    "empty": "開いているチャットはありません。"
   }
 }

@@ -265,5 +265,16 @@
     "opencode": "OpenCode",
     "opencodeCli": "OpenCode CLI",
     "claudeCodeCli": "Claude Code CLI"
+  },
+  "activity": {
+    "title": "Actividad",
+    "running": "Trabajando",
+    "waiting": "Requiere entrada",
+    "finished": "Completado",
+    "failed": "Error",
+    "interrupted": "Interrumpido",
+    "idle": "Inactivo",
+    "open": "Abrir chat",
+    "empty": "No hay chats abiertos."
   }
 }

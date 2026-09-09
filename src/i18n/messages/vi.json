@@ -265,5 +265,16 @@
     "opencode": "OpenCode",
     "opencodeCli": "OpenCode CLI",
     "claudeCodeCli": "Claude Code CLI"
+  },
+  "activity": {
+    "title": "Hoạt động",
+    "running": "Đang làm việc",
+    "waiting": "Cần nhập liệu",
+    "finished": "Hoàn thành",
+    "failed": "Thất bại",
+    "interrupted": "Bị gián đoạn",
+    "idle": "Nhàn rỗi",
+    "open": "Mở cuộc trò chuyện",
+    "empty": "Không có cuộc trò chuyện nào đang mở."
   }
 }

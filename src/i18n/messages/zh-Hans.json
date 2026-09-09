@@ -265,5 +265,16 @@
     "opencode": "OpenCode",
     "opencodeCli": "OpenCode CLI",
     "claudeCodeCli": "Claude Code CLI"
+  },
+  "activity": {
+    "title": "活动",
+    "running": "处理中",
+    "waiting": "需要输入",
+    "finished": "已完成",
+    "failed": "失败",
+    "interrupted": "已中断",
+    "idle": "空闲",
+    "open": "打开聊天",
+    "empty": "没有打开的聊天。"
   }
 }

@@ -263,5 +263,16 @@
     "opencode": "OpenCode",
     "opencodeCli": "OpenCode CLI",
     "claudeCodeCli": "Claude Code CLI"
+  },
+  "activity": {
+    "title": "活動",
+    "running": "處理中",
+    "waiting": "需要輸入",
+    "finished": "已完成",
+    "failed": "失敗",
+    "interrupted": "已中斷",
+    "idle": "閒置",
+    "open": "開啟聊天",
+    "empty": "沒有開啟的聊天。"
   }
 }
