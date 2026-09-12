@@ -761,6 +761,13 @@ export const deleteChatCheckpoints = ({ chatId, projectPath }) =>
     return refs.length;
   });
 
+export const deleteProjectCheckpoints = (projectPath) =>
+  withProjectCheckpointLock(projectPath, async () => {
+    const shadowDir = getShadowRepoDirectory(projectPath);
+    ensuredShadowRepositories.delete(shadowDir);
+    await fs.rm(shadowDir, { force: true, recursive: true });
+  });
+
 /**
  * Wraps a streaming chat response so the checkpoint's "after" snapshot is
  * captured once the stream finishes or the client aborts.

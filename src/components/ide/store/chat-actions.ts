@@ -15,6 +15,7 @@ import {
   shouldTouchChatUpdatedAt,
   updateProjectUiInList,
 } from ".";
+import { requestChatCheckpointCleanup } from "./checkpoint-cleanup";
 import type { IdeState, IdeStoreGet, IdeStoreSet } from "./ide-store-types";
 
 export const createChatActions = (
@@ -442,6 +443,14 @@ export const createChatActions = (
     const idsToDelete = new Set(chatIds);
     if (idsToDelete.size === 0) {
       return;
+    }
+
+    {
+      const current = get();
+      requestChatCheckpointCleanup(
+        current.chats.filter((chat) => idsToDelete.has(chat.id)),
+        [...current.projects, ...current.closedProjects],
+      );
     }
 
     set((state) => {

@@ -118,7 +118,7 @@ test("removeWorktreeProject cleans up the worktree and activates the parent", as
     });
 
     assert.equal(result?.branchDeleted, true);
-    assert.equal(fetchMock.mock.calls.length, 1);
+    assert.equal(fetchMock.mock.calls.length, 2);
     const [url, init] = fetchMock.mock.calls[0] ?? [];
     assert.equal(url, "/api/project-git-worktree-cleanup");
     assert.deepEqual(JSON.parse(String(init?.body)), {
@@ -126,6 +126,11 @@ test("removeWorktreeProject cleans up the worktree and activates the parent", as
       force: false,
       projectPath: parent.path,
       worktreePath: worktree.path,
+    });
+    const [cleanupUrl, cleanupInit] = fetchMock.mock.calls[1] ?? [];
+    assert.equal(cleanupUrl, "/api/checkpoint-delete-project");
+    assert.deepEqual(JSON.parse(String(cleanupInit?.body)), {
+      projectPath: worktree.path,
     });
 
     const state = store.getState();

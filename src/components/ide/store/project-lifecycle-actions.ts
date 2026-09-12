@@ -18,6 +18,7 @@ import {
 } from "../ide-state";
 import { deleteTerminalScrollback } from "../terminal-scrollback";
 import { updateProjectInList, updateProjectUiInList } from ".";
+import { requestProjectCheckpointCleanup } from "./checkpoint-cleanup";
 import type { IdeState, IdeStoreGet, IdeStoreSet } from "./ide-store-types";
 
 export const isMissingWorktreeError = (message: string) =>
@@ -498,6 +499,8 @@ export const createProjectLifecycleActions = (
     if (openProject) {
       get().closeProject(openProject.id);
     }
+
+    requestProjectCheckpointCleanup(worktreePath);
 
     set((current) => {
       const removedProjectIds = new Set(

@@ -14,6 +14,15 @@ export const checkpointDiffRequestSchema =
     previousPath: z.string().min(1).nullable().optional(),
   });
 
+export const checkpointDeleteChatsRequestSchema = z.object({
+  chatIds: z.array(identifierSchema).min(1).max(1000),
+  projectPath: z.string().min(1),
+});
+
+export const checkpointDeleteProjectRequestSchema = z.object({
+  projectPath: z.string().min(1),
+});
+
 export const checkpointRestoreRequestSchema =
   checkpointChangesRequestSchema.extend({
     filePaths: z.array(z.string().min(1)).min(1).max(500),

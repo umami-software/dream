@@ -15,6 +15,8 @@ vi.mock("electron", () => ({
 
 const {
   createCheckpoint,
+  deleteChatCheckpoints,
+  deleteProjectCheckpoints,
   finalizeCheckpoint,
   getCheckpointFileDiff,
   getShadowRepoDirectory,
@@ -324,4 +326,45 @@ test("checkpoint routes reject unknown checkpoints and escaped paths", async (co
   });
   assert.equal(restore.status, 200);
   assert.equal((await restore.json()).results[0].status, "error");
+});
+
+test("deleting chat checkpoints removes only that chat's refs", async (context) => {
+  if (!gitAvailable) return context.skip();
+
+  const projectPath = await createProject();
+  await writeProjectFile(projectPath, "a.txt", "one\n");
+  const checkpointId = await runTurn(projectPath, () =>
+    writeProjectFile(projectPath, "a.txt", "two\n"),
+  );
+  const other = await createCheckpoint({ chatId: "chat-2", projectPath });
+  await finalizeCheckpoint({
+    chatId: "chat-2",
+    checkpointId: other.checkpointId,
+    projectPath,
+  });
+
+  const app = new Hono();
+  registerCheckpointRoutes(app);
+  const response = await app.request("/api/checkpoint-delete-chats", {
+    body: JSON.stringify({ chatIds: [chatId], projectPath }),
+    headers: { "Content-Type": "application/json" },
+    method: "POST",
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { deletedRefs: 2 });
+
+  await assert.rejects(
+    listCheckpointChanges({ chatId, checkpointId, projectPath }),
+    /Checkpoint not found/,
+  );
+  const survivor = await listCheckpointChanges({
+    chatId: "chat-2",
+    checkpointId: other.checkpointId,
+    projectPath,
+  });
+  assert.equal(survivor.complete, true);
+  assert.equal(await deleteChatCheckpoints({ chatId, projectPath }), 0);
+
+  await deleteProjectCheckpoints(projectPath);
+  await assert.rejects(fs.access(getShadowRepoDirectory(projectPath)));
 });
