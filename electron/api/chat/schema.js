@@ -33,6 +33,7 @@ export const chatRequestBodySchema = z.object({
     .optional(),
   reasoningLabel: z.string().min(1).optional(),
   chatId: z.string().min(1).optional(),
+  checkpointsEnabled: z.boolean().default(true),
   projectId: z.string().min(1).optional(),
   threadId: z.string().min(1).optional(),
 });

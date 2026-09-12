@@ -1,9 +1,10 @@
 import type { LanguageModelUsage, UIMessage } from "ai";
-import { CheckIcon, CopyIcon } from "lucide-react";
+import { CheckIcon, CopyIcon, HistoryIcon } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import type { ProjectReference } from "@/types/ide";
+import { CheckpointChangesDialog } from "./checkpoint-changes-dialog";
 import {
   ContinueChatPopover,
   type ContinueChatPopoverContext,
@@ -11,6 +12,7 @@ import {
 import { getMessageText } from "./message-content";
 
 export type ChatMessageMetadata = {
+  checkpointId?: string;
   completedAt?: string;
   contextWindow?: number;
   createdAt?: string;
@@ -96,16 +98,27 @@ const isClaudeMessageMetadata = (metadata: ChatMessageMetadata | undefined) => {
   );
 };
 
+export type MessageCheckpointContext = {
+  chatId: string;
+  isProcessing: boolean;
+  projectId: string;
+  projectPath: string;
+};
+
 export const MessageHoverFooter = ({
+  checkpoint,
   continueChat,
   isRunning = false,
   message,
 }: {
+  checkpoint?: MessageCheckpointContext;
   continueChat?: ContinueChatPopoverContext;
   isRunning?: boolean;
   message: UIMessage;
 }) => {
   const chatT = useTranslations("chat");
+  const checkpointsT = useTranslations("checkpoints");
+  const [checkpointOpen, setCheckpointOpen] = useState(false);
   const format = useFormatter();
   const formatDurationUnit: FormatDurationUnit = (value, unit) =>
     format.number(value, { style: "unit", unit, unitDisplay: "narrow" });
@@ -153,6 +166,10 @@ export const MessageHoverFooter = ({
   const text = getMessageText(message);
   const continueChatContext =
     message.role === "assistant" ? continueChat : undefined;
+  const checkpointId =
+    message.role === "assistant" && checkpoint && metadata?.checkpointId
+      ? metadata.checkpointId
+      : null;
   const footerItems = [
     { id: "model", text: modelLabel, shimmer: false },
     { id: "reasoning", text: reasoningLabel, shimmer: false },
@@ -190,7 +207,12 @@ export const MessageHoverFooter = ({
     window.setTimeout(() => setCopied(false), 1200);
   }, [text]);
 
-  if (footerItems.length === 0 && !text && !continueChatContext) {
+  if (
+    footerItems.length === 0 &&
+    !text &&
+    !continueChatContext &&
+    !checkpointId
+  ) {
     return null;
   }
 
@@ -227,6 +249,30 @@ export const MessageHoverFooter = ({
             <CopyIcon className="size-3.5" />
           )}
         </button>
+      ) : null}
+      {!isRunning && checkpointId && checkpoint ? (
+        <>
+          <button
+            aria-label={checkpointsT("viewTurnChanges")}
+            className="pointer-events-auto rounded p-1 transition-colors hover:bg-accent hover:text-foreground"
+            onClick={() => setCheckpointOpen(true)}
+            title={checkpointsT("viewTurnChanges")}
+            type="button"
+          >
+            <HistoryIcon className="size-3.5" />
+          </button>
+          {checkpointOpen ? (
+            <CheckpointChangesDialog
+              chatId={checkpoint.chatId}
+              checkpointId={checkpointId}
+              disabled={checkpoint.isProcessing}
+              onOpenChange={setCheckpointOpen}
+              open={checkpointOpen}
+              projectId={checkpoint.projectId}
+              projectPath={checkpoint.projectPath}
+            />
+          ) : null}
+        </>
       ) : null}
       {!isRunning && continueChatContext ? (
         <ContinueChatPopover {...continueChatContext} messageId={message.id} />

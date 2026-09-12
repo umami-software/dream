@@ -740,6 +740,17 @@ export const SettingsDialog = () => {
                       }
                     />
                     <SettingsSwitchRow
+                      checked={settings.changeCheckpoints}
+                      description={settingsT("changeCheckpointsDescription")}
+                      label={settingsT("changeCheckpoints")}
+                      onCheckedChange={(checked) =>
+                        setSettings((previous) => ({
+                          ...previous,
+                          changeCheckpoints: checked,
+                        }))
+                      }
+                    />
+                    <SettingsSwitchRow
                       checked={settings.expandToolCalls}
                       description={settingsT("expandToolCallsDescription")}
                       label={settingsT("expandToolCalls")}

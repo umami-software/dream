@@ -765,6 +765,10 @@ export const mergePersistedState = (
       typeof rawSettings.groupToolCalls === "boolean"
         ? rawSettings.groupToolCalls
         : DEFAULT_SETTINGS.groupToolCalls,
+    changeCheckpoints:
+      typeof rawSettings.changeCheckpoints === "boolean"
+        ? rawSettings.changeCheckpoints
+        : DEFAULT_SETTINGS.changeCheckpoints,
     cursorSelectedModels: dedupeModels(
       Array.isArray(rawSettings.cursorSelectedModels)
         ? rawSettings.cursorSelectedModels

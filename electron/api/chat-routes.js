@@ -12,12 +12,71 @@ import {
   formatProjectReferencesForPrompt,
 } from "./chat/schema.js";
 import { generateChatTitle } from "./chat/title.js";
+import {
+  attachCheckpointFinalizer,
+  createCheckpoint,
+  finalizeCheckpoint,
+} from "./checkpoints/service.js";
 import { readCodexAccessToken } from "./providers/codex-auth.js";
 import {
   getCursorCliUnavailableMessage,
   isCursorCliAvailable,
 } from "./providers/cursor-cli.js";
 import { isCliCommandAvailable } from "./shared/cli.js";
+
+const CHECKPOINT_CAPTURE_TIMEOUT_MS = 20_000;
+
+const withTimeout = (promise, timeoutMs) =>
+  new Promise((resolve, reject) => {
+    const timer = setTimeout(
+      () => reject(new Error("Checkpoint capture timed out.")),
+      timeoutMs,
+    );
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+
+const getContinuationCheckpointId = (lastMessage) => {
+  const metadata = lastMessage?.metadata;
+  const checkpointId =
+    metadata && typeof metadata === "object" ? metadata.checkpointId : null;
+  return typeof checkpointId === "string" && checkpointId ? checkpointId : null;
+};
+
+const resolveTurnCheckpointId = async ({
+  chatId,
+  checkpointsEnabled,
+  messages,
+  projectPath,
+}) => {
+  if (!checkpointsEnabled || !chatId) {
+    return null;
+  }
+
+  const lastMessage = messages.at(-1);
+  if (lastMessage?.role !== "user") {
+    return getContinuationCheckpointId(lastMessage);
+  }
+
+  try {
+    const checkpoint = await withTimeout(
+      createCheckpoint({ chatId, projectPath }),
+      CHECKPOINT_CAPTURE_TIMEOUT_MS,
+    );
+    return checkpoint.checkpointId;
+  } catch (error) {
+    console.warn("[checkpoints] Skipping checkpoint for this turn:", error);
+    return null;
+  }
+};
 
 const validateProjectPath = async (projectPath) => {
   try {
@@ -179,6 +238,7 @@ export const registerChatRoutes = (app) => {
     const {
       chatId,
       agentMode,
+      checkpointsEnabled,
       messages,
       model,
       modelLabel,
@@ -222,116 +282,141 @@ export const registerChatRoutes = (app) => {
       return c.text(projectPathError.message, projectPathError.status);
     }
 
-    if (provider === "openai") {
-      const codexError = await validateCodexReady();
-      if (codexError) {
-        return c.text(codexError.message, codexError.status);
-      }
-
-      return streamCodexAppServerResponse({
-        abortSignal: c.req.raw.signal,
-        chatId: resolvedChatId,
-        codexPermissionMode,
-        messages,
-        model,
-        projectReferencesPrompt,
-        projectPath: resolvedProjectPath,
-        modelSpeed,
-        reasoningEffort,
-        remoteConversationId,
-        remoteConversationModel,
-        remoteConversationModelSpeed,
-        remoteConversationProjectPath,
-        responseMessageMetadata,
-      });
-    }
-
-    if (provider === "opencode") {
-      const openCodeError = await validateOpenCodeReady();
-      if (openCodeError) {
-        return c.text(openCodeError.message, openCodeError.status);
-      }
-
-      return streamOpenCodeResponse({
-        abortSignal: c.req.raw.signal,
-        agentMode,
-        codexPermissionMode,
-        messages,
-        model,
-        modelSpeed,
-        projectReferencesPrompt,
-        projectPath: resolvedProjectPath,
-        remoteConversationId,
-        remoteConversationModel,
-        remoteConversationModelSpeed,
-        remoteConversationProjectPath,
-        responseMessageMetadata,
-      });
-    }
-
-    if (provider === "cursor") {
-      const cursorError = await validateCursorReady();
-      if (cursorError) {
-        return c.text(cursorError.message, cursorError.status);
-      }
-
-      return streamCursorResponse({
-        abortSignal: c.req.raw.signal,
-        codexPermissionMode,
-        messages,
-        model,
-        modelSpeed,
-        projectReferencesPrompt,
-        projectPath: resolvedProjectPath,
-        remoteConversationId,
-        remoteConversationModel,
-        remoteConversationModelSpeed,
-        remoteConversationProjectPath,
-        responseMessageMetadata,
-      });
-    }
-
-    if (provider === "grok") {
-      const grokError = await validateGrokReady();
-      if (grokError) {
-        return c.text(grokError.message, grokError.status);
-      }
-
-      return streamGrokResponse({
-        abortSignal: c.req.raw.signal,
-        agentMode,
-        codexPermissionMode,
-        messages,
-        model,
-        projectReferencesPrompt,
-        projectPath: resolvedProjectPath,
-        reasoningEffort,
-        remoteConversationId,
-        remoteConversationModel,
-        remoteConversationProjectPath,
-        responseMessageMetadata,
-      });
-    }
-
-    const claudeError = await validateClaudeReady();
-    if (claudeError) {
-      return c.text(claudeError.message, claudeError.status);
-    }
-
-    return streamClaudeResponse({
-      agentMode,
-      claudePermissionMode,
+    const checkpointId = await resolveTurnCheckpointId({
+      chatId: resolvedChatId,
+      checkpointsEnabled,
       messages,
-      model,
-      modelSpeed,
-      projectReferencesPrompt,
       projectPath: resolvedProjectPath,
-      reasoningEffort,
-      remoteConversationId,
-      remoteConversationModel,
-      remoteConversationModelSpeed,
-      remoteConversationProjectPath,
-      responseMessageMetadata,
     });
+    if (checkpointId) {
+      responseMessageMetadata.checkpointId = checkpointId;
+    }
+
+    const streamResponse = await dispatchChatStream();
+    if (!checkpointId || !(streamResponse instanceof Response)) {
+      return streamResponse;
+    }
+
+    return attachCheckpointFinalizer(streamResponse, c.req.raw.signal, () =>
+      finalizeCheckpoint({
+        chatId: resolvedChatId,
+        checkpointId,
+        projectPath: resolvedProjectPath,
+      }),
+    );
+
+    async function dispatchChatStream() {
+      if (provider === "openai") {
+        const codexError = await validateCodexReady();
+        if (codexError) {
+          return c.text(codexError.message, codexError.status);
+        }
+
+        return streamCodexAppServerResponse({
+          abortSignal: c.req.raw.signal,
+          chatId: resolvedChatId,
+          codexPermissionMode,
+          messages,
+          model,
+          projectReferencesPrompt,
+          projectPath: resolvedProjectPath,
+          modelSpeed,
+          reasoningEffort,
+          remoteConversationId,
+          remoteConversationModel,
+          remoteConversationModelSpeed,
+          remoteConversationProjectPath,
+          responseMessageMetadata,
+        });
+      }
+
+      if (provider === "opencode") {
+        const openCodeError = await validateOpenCodeReady();
+        if (openCodeError) {
+          return c.text(openCodeError.message, openCodeError.status);
+        }
+
+        return streamOpenCodeResponse({
+          abortSignal: c.req.raw.signal,
+          agentMode,
+          codexPermissionMode,
+          messages,
+          model,
+          modelSpeed,
+          projectReferencesPrompt,
+          projectPath: resolvedProjectPath,
+          remoteConversationId,
+          remoteConversationModel,
+          remoteConversationModelSpeed,
+          remoteConversationProjectPath,
+          responseMessageMetadata,
+        });
+      }
+
+      if (provider === "cursor") {
+        const cursorError = await validateCursorReady();
+        if (cursorError) {
+          return c.text(cursorError.message, cursorError.status);
+        }
+
+        return streamCursorResponse({
+          abortSignal: c.req.raw.signal,
+          codexPermissionMode,
+          messages,
+          model,
+          modelSpeed,
+          projectReferencesPrompt,
+          projectPath: resolvedProjectPath,
+          remoteConversationId,
+          remoteConversationModel,
+          remoteConversationModelSpeed,
+          remoteConversationProjectPath,
+          responseMessageMetadata,
+        });
+      }
+
+      if (provider === "grok") {
+        const grokError = await validateGrokReady();
+        if (grokError) {
+          return c.text(grokError.message, grokError.status);
+        }
+
+        return streamGrokResponse({
+          abortSignal: c.req.raw.signal,
+          agentMode,
+          codexPermissionMode,
+          messages,
+          model,
+          projectReferencesPrompt,
+          projectPath: resolvedProjectPath,
+          reasoningEffort,
+          remoteConversationId,
+          remoteConversationModel,
+          remoteConversationProjectPath,
+          responseMessageMetadata,
+        });
+      }
+
+      const claudeError = await validateClaudeReady();
+      if (claudeError) {
+        return c.text(claudeError.message, claudeError.status);
+      }
+
+      return streamClaudeResponse({
+        agentMode,
+        claudePermissionMode,
+        messages,
+        model,
+        modelSpeed,
+        projectReferencesPrompt,
+        projectPath: resolvedProjectPath,
+        reasoningEffort,
+        remoteConversationId,
+        remoteConversationModel,
+        remoteConversationModelSpeed,
+        remoteConversationProjectPath,
+        responseMessageMetadata,
+      });
+    }
   });
 };

@@ -138,6 +138,7 @@ export interface AppSettings {
   defaultGitGenerationModel: string;
   defaultModelSpeed: ModelSpeed;
   defaultReasoningEffort: ReasoningEffort | null;
+  changeCheckpoints: boolean;
   expandToolCalls: boolean;
   groupToolCalls: boolean;
   openAiSelectedModels: string[];
@@ -472,6 +473,48 @@ export interface ProjectGitDiffResponse {
   parsedDiff: FileDiffMetadata | null;
   previousPath: string | null;
   status: ProjectGitChangeStatus;
+}
+
+export type CheckpointChangeStatus =
+  | "added"
+  | "modified"
+  | "deleted"
+  | "renamed";
+
+export interface CheckpointChangeEntry {
+  additions: number;
+  binary: boolean;
+  deletions: number;
+  filePath: string;
+  modifiedSince: boolean;
+  previousPath: string | null;
+  status: CheckpointChangeStatus;
+}
+
+export interface CheckpointChangesResponse {
+  complete: boolean;
+  files: CheckpointChangeEntry[];
+}
+
+export interface CheckpointDiffResponse {
+  binary: boolean;
+  diff: string;
+  filePath: string;
+  parsedDiff: FileDiffMetadata | null;
+  previousPath: string | null;
+  status: CheckpointChangeStatus;
+}
+
+export type CheckpointRestoreMode = "merge" | "overwrite";
+
+export interface CheckpointRestoreResult {
+  filePath: string;
+  message: string | null;
+  status: "restored" | "conflict" | "error";
+}
+
+export interface CheckpointRestoreResponse {
+  results: CheckpointRestoreResult[];
 }
 
 export interface ProjectGitCommitRequest {

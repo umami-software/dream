@@ -67,6 +67,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   defaultModel: "",
   defaultModelSpeed: "standard",
   defaultReasoningEffort: null,
+  changeCheckpoints: true,
   expandToolCalls: false,
   groupToolCalls: false,
   cursorSelectedModels: [],

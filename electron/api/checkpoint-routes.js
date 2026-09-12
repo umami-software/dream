@@ -1,0 +1,58 @@
+import {
+  checkpointChangesRequestSchema,
+  checkpointDiffRequestSchema,
+  checkpointRestoreRequestSchema,
+} from "./checkpoints/schemas.js";
+import {
+  CheckpointNotFoundError,
+  getCheckpointFileDiff,
+  listCheckpointChanges,
+  restoreCheckpointFiles,
+} from "./checkpoints/service.js";
+import { ensureProjectDirectory } from "./project-git/files.js";
+
+const handleCheckpointRequest = async (c, schema, handler) => {
+  let rawBody;
+  try {
+    rawBody = await c.req.json();
+  } catch {
+    return c.text("Invalid JSON payload.", 400);
+  }
+
+  const parsed = schema.safeParse(rawBody);
+  if (!parsed.success) {
+    return c.text(parsed.error.message, 400);
+  }
+
+  try {
+    await ensureProjectDirectory(parsed.data.projectPath);
+    return c.json(await handler(parsed.data));
+  } catch (error) {
+    if (error instanceof CheckpointNotFoundError) {
+      return c.text(error.message, 404);
+    }
+    const message =
+      error instanceof Error ? error.message : "Checkpoint request failed.";
+    return c.text(message, 400);
+  }
+};
+
+export const registerCheckpointRoutes = (app) => {
+  app.post("/api/checkpoint-changes", (c) =>
+    handleCheckpointRequest(c, checkpointChangesRequestSchema, (data) =>
+      listCheckpointChanges(data),
+    ),
+  );
+
+  app.post("/api/checkpoint-diff", (c) =>
+    handleCheckpointRequest(c, checkpointDiffRequestSchema, (data) =>
+      getCheckpointFileDiff(data),
+    ),
+  );
+
+  app.post("/api/checkpoint-restore", (c) =>
+    handleCheckpointRequest(c, checkpointRestoreRequestSchema, (data) =>
+      restoreCheckpointFiles(data),
+    ),
+  );
+};

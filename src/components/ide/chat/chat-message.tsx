@@ -260,6 +260,12 @@ export const ChatMessage = memo(
             })()}
           </MessageContent>
           <MessageHoverFooter
+            checkpoint={{
+              chatId: continueChat.chat.id,
+              isProcessing: continueChat.isProcessing,
+              projectId: continueChat.chat.projectId,
+              projectPath,
+            }}
             continueChat={continueChat}
             isRunning={isActivelyStreaming}
             message={message}

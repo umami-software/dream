@@ -1,5 +1,40 @@
 export const supplementalMessages = {
   de: {
+    checkpoints: {
+      binaryFile: "Binärdatei – kein Diff verfügbar.",
+      description:
+        "Prüfe die von dieser Antwort geänderten Dateien und stelle sie bei Bedarf wieder her.",
+      editedLater: "Später bearbeitet",
+      emptyState: "Diese Antwort hat keine Dateien geändert.",
+      filesChanged:
+        "{count, plural, =0 {Keine Dateien geändert} =1 {1 Datei in dieser Antwort geändert} other {# Dateien in dieser Antwort geändert}}",
+      incompleteNote:
+        "Der Durchlauf wurde unterbrochen, daher wurde der Endzustand beim Öffnen dieses Dialogs erfasst.",
+      loadFailed: "Checkpoint-Änderungen konnten nicht geladen werden.",
+      noDiff: "Keine Diff-Ausgabe verfügbar.",
+      notFound: "Dieser Checkpoint ist nicht mehr verfügbar.",
+      overwriteAnyway: "Trotzdem überschreiben",
+      restoreConflict:
+        "{count, plural, =1 {1 Datei hat spätere Änderungen, die sich mit dieser Antwort überschneiden. Beim Wiederherstellen gehen diese verloren.} other {# Dateien haben spätere Änderungen, die sich mit dieser Antwort überschneiden. Beim Wiederherstellen gehen diese verloren.}}",
+      restoreFailed: "Dateien konnten nicht wiederhergestellt werden.",
+      restoreSelected:
+        "{count, plural, =0 {Wiederherstellen} =1 {1 Datei wiederherstellen} other {# Dateien wiederherstellen}}",
+      restored: "Wiederhergestellt",
+      restoredCount:
+        "{count, plural, =1 {1 wiederhergestellt} other {# wiederhergestellt}}",
+      selectAll: "Alle auswählen",
+      statusAdded: "Hinzugefügt",
+      statusDeleted: "Gelöscht",
+      statusModified: "Geändert",
+      statusRenamed: "Umbenannt",
+      title: "Änderungen in dieser Antwort",
+      viewTurnChanges: "Dateiänderungen dieser Antwort anzeigen",
+    },
+    settings: {
+      changeCheckpoints: "Änderungs-Checkpoints",
+      changeCheckpointsDescription:
+        "Projektdateien vor jeder Antwort sichern, um Änderungen zu prüfen und wiederherzustellen",
+    },
     common: {
       archive: "Archiv",
       branch: "Zweig",
@@ -428,6 +463,40 @@ export const supplementalMessages = {
     },
   },
   en: {
+    checkpoints: {
+      binaryFile: "Binary file — diff not available.",
+      description:
+        "Inspect the files this reply changed and restore any of them.",
+      editedLater: "Edited later",
+      emptyState: "This reply did not change any files.",
+      filesChanged:
+        "{count, plural, =0 {No files changed} =1 {1 file changed in this reply} other {# files changed in this reply}}",
+      incompleteNote:
+        'The turn was interrupted, so the "after" state was captured when you opened this dialog.',
+      loadFailed: "Failed to load checkpoint changes.",
+      noDiff: "No diff output available.",
+      notFound: "This checkpoint is no longer available.",
+      overwriteAnyway: "Overwrite anyway",
+      restoreConflict:
+        "{count, plural, =1 {1 file has later edits that overlap with this reply's changes. Restoring it will discard those edits.} other {# files have later edits that overlap with this reply's changes. Restoring them will discard those edits.}}",
+      restoreFailed: "Failed to restore files.",
+      restoreSelected:
+        "{count, plural, =0 {Restore} =1 {Restore 1 file} other {Restore # files}}",
+      restored: "Restored",
+      restoredCount: "{count, plural, =1 {1 restored} other {# restored}}",
+      selectAll: "Select all",
+      statusAdded: "Added",
+      statusDeleted: "Deleted",
+      statusModified: "Modified",
+      statusRenamed: "Renamed",
+      title: "Changes in this reply",
+      viewTurnChanges: "View file changes from this reply",
+    },
+    settings: {
+      changeCheckpoints: "Change checkpoints",
+      changeCheckpointsDescription:
+        "Snapshot project files before each reply so you can inspect and restore changes",
+    },
     common: {
       archive: "Archive",
       branch: "Branch",
@@ -845,6 +914,40 @@ export const supplementalMessages = {
     },
   },
   es: {
+    checkpoints: {
+      binaryFile: "Archivo binario: diff no disponible.",
+      description:
+        "Revisa los archivos que cambió esta respuesta y restaura los que quieras.",
+      editedLater: "Editado después",
+      emptyState: "Esta respuesta no cambió ningún archivo.",
+      filesChanged:
+        "{count, plural, =0 {Ningún archivo cambiado} =1 {1 archivo cambiado en esta respuesta} other {# archivos cambiados en esta respuesta}}",
+      incompleteNote:
+        "El turno se interrumpió, así que el estado final se capturó al abrir este diálogo.",
+      loadFailed: "No se pudieron cargar los cambios del checkpoint.",
+      noDiff: "No hay salida de diff disponible.",
+      notFound: "Este checkpoint ya no está disponible.",
+      overwriteAnyway: "Sobrescribir de todos modos",
+      restoreConflict:
+        "{count, plural, =1 {1 archivo tiene ediciones posteriores que se solapan con los cambios de esta respuesta. Restaurarlo descartará esas ediciones.} other {# archivos tienen ediciones posteriores que se solapan con los cambios de esta respuesta. Restaurarlos descartará esas ediciones.}}",
+      restoreFailed: "No se pudieron restaurar los archivos.",
+      restoreSelected:
+        "{count, plural, =0 {Restaurar} =1 {Restaurar 1 archivo} other {Restaurar # archivos}}",
+      restored: "Restaurado",
+      restoredCount: "{count, plural, =1 {1 restaurado} other {# restaurados}}",
+      selectAll: "Seleccionar todo",
+      statusAdded: "Añadido",
+      statusDeleted: "Eliminado",
+      statusModified: "Modificado",
+      statusRenamed: "Renombrado",
+      title: "Cambios en esta respuesta",
+      viewTurnChanges: "Ver cambios de archivos de esta respuesta",
+    },
+    settings: {
+      changeCheckpoints: "Checkpoints de cambios",
+      changeCheckpointsDescription:
+        "Captura los archivos del proyecto antes de cada respuesta para revisar y restaurar cambios",
+    },
     common: {
       archive: "Archivar",
       branch: "Sucursal",
@@ -1270,6 +1373,40 @@ export const supplementalMessages = {
     },
   },
   fr: {
+    checkpoints: {
+      binaryFile: "Fichier binaire : diff indisponible.",
+      description:
+        "Examinez les fichiers modifiés par cette réponse et restaurez ceux de votre choix.",
+      editedLater: "Modifié ensuite",
+      emptyState: "Cette réponse n'a modifié aucun fichier.",
+      filesChanged:
+        "{count, plural, =0 {Aucun fichier modifié} =1 {1 fichier modifié dans cette réponse} other {# fichiers modifiés dans cette réponse}}",
+      incompleteNote:
+        "Le tour a été interrompu ; l'état final a donc été capturé à l'ouverture de cette fenêtre.",
+      loadFailed: "Impossible de charger les modifications du checkpoint.",
+      noDiff: "Aucune sortie de diff disponible.",
+      notFound: "Ce checkpoint n'est plus disponible.",
+      overwriteAnyway: "Écraser quand même",
+      restoreConflict:
+        "{count, plural, =1 {1 fichier contient des modifications ultérieures qui chevauchent celles de cette réponse. Le restaurer supprimera ces modifications.} other {# fichiers contiennent des modifications ultérieures qui chevauchent celles de cette réponse. Les restaurer supprimera ces modifications.}}",
+      restoreFailed: "Impossible de restaurer les fichiers.",
+      restoreSelected:
+        "{count, plural, =0 {Restaurer} =1 {Restaurer 1 fichier} other {Restaurer # fichiers}}",
+      restored: "Restauré",
+      restoredCount: "{count, plural, =1 {1 restauré} other {# restaurés}}",
+      selectAll: "Tout sélectionner",
+      statusAdded: "Ajouté",
+      statusDeleted: "Supprimé",
+      statusModified: "Modifié",
+      statusRenamed: "Renommé",
+      title: "Modifications de cette réponse",
+      viewTurnChanges: "Voir les fichiers modifiés par cette réponse",
+    },
+    settings: {
+      changeCheckpoints: "Checkpoints de modifications",
+      changeCheckpointsDescription:
+        "Capturer les fichiers du projet avant chaque réponse pour examiner et restaurer les modifications",
+    },
     common: {
       archive: "Archives",
       branch: "Branche",
@@ -1695,6 +1832,41 @@ export const supplementalMessages = {
     },
   },
   it: {
+    checkpoints: {
+      binaryFile: "File binario: diff non disponibile.",
+      description:
+        "Esamina i file modificati da questa risposta e ripristina quelli che vuoi.",
+      editedLater: "Modificato dopo",
+      emptyState: "Questa risposta non ha modificato alcun file.",
+      filesChanged:
+        "{count, plural, =0 {Nessun file modificato} =1 {1 file modificato in questa risposta} other {# file modificati in questa risposta}}",
+      incompleteNote:
+        "Il turno è stato interrotto, quindi lo stato finale è stato acquisito all'apertura di questa finestra.",
+      loadFailed: "Impossibile caricare le modifiche del checkpoint.",
+      noDiff: "Nessun output diff disponibile.",
+      notFound: "Questo checkpoint non è più disponibile.",
+      overwriteAnyway: "Sovrascrivi comunque",
+      restoreConflict:
+        "{count, plural, =1 {1 file contiene modifiche successive che si sovrappongono a quelle di questa risposta. Ripristinarlo eliminerà tali modifiche.} other {# file contengono modifiche successive che si sovrappongono a quelle di questa risposta. Ripristinarli eliminerà tali modifiche.}}",
+      restoreFailed: "Impossibile ripristinare i file.",
+      restoreSelected:
+        "{count, plural, =0 {Ripristina} =1 {Ripristina 1 file} other {Ripristina # file}}",
+      restored: "Ripristinato",
+      restoredCount:
+        "{count, plural, =1 {1 ripristinato} other {# ripristinati}}",
+      selectAll: "Seleziona tutto",
+      statusAdded: "Aggiunto",
+      statusDeleted: "Eliminato",
+      statusModified: "Modificato",
+      statusRenamed: "Rinominato",
+      title: "Modifiche in questa risposta",
+      viewTurnChanges: "Mostra i file modificati da questa risposta",
+    },
+    settings: {
+      changeCheckpoints: "Checkpoint delle modifiche",
+      changeCheckpointsDescription:
+        "Acquisisci i file del progetto prima di ogni risposta per esaminare e ripristinare le modifiche",
+    },
     common: {
       archive: "Archivio",
       branch: "Ramo",
@@ -2120,6 +2292,40 @@ export const supplementalMessages = {
     },
   },
   ja: {
+    checkpoints: {
+      binaryFile: "バイナリファイル — 差分は表示できません。",
+      description:
+        "この返答で変更されたファイルを確認し、必要なものを復元します。",
+      editedLater: "後で編集済み",
+      emptyState: "この返答ではファイルは変更されていません。",
+      filesChanged:
+        "{count, plural, =0 {変更されたファイルはありません} other {この返答で # 件のファイルが変更されました}}",
+      incompleteNote:
+        "ターンが中断されたため、終了時の状態はこのダイアログを開いた時点で取得されました。",
+      loadFailed: "チェックポイントの変更を読み込めませんでした。",
+      noDiff: "差分の出力がありません。",
+      notFound: "このチェックポイントは利用できなくなりました。",
+      overwriteAnyway: "上書きして復元",
+      restoreConflict:
+        "{count, plural, other {# 件のファイルに、この返答の変更と重なる後からの編集があります。復元するとその編集は失われます。}}",
+      restoreFailed: "ファイルを復元できませんでした。",
+      restoreSelected:
+        "{count, plural, =0 {復元} other {# 件のファイルを復元}}",
+      restored: "復元済み",
+      restoredCount: "{count, plural, other {# 件復元}}",
+      selectAll: "すべて選択",
+      statusAdded: "追加",
+      statusDeleted: "削除",
+      statusModified: "変更",
+      statusRenamed: "名前変更",
+      title: "この返答での変更",
+      viewTurnChanges: "この返答のファイル変更を表示",
+    },
+    settings: {
+      changeCheckpoints: "変更チェックポイント",
+      changeCheckpointsDescription:
+        "各返答の前にプロジェクトファイルのスナップショットを取り、変更の確認と復元を可能にします",
+    },
     common: {
       archive: "アーカイブ",
       branch: "ブランチ",
@@ -2538,6 +2744,39 @@ export const supplementalMessages = {
     },
   },
   ko: {
+    checkpoints: {
+      binaryFile: "바이너리 파일 — diff를 표시할 수 없습니다.",
+      description:
+        "이 답변에서 변경된 파일을 확인하고 원하는 파일을 복원합니다.",
+      editedLater: "이후 편집됨",
+      emptyState: "이 답변에서 변경된 파일이 없습니다.",
+      filesChanged:
+        "{count, plural, =0 {변경된 파일 없음} other {이 답변에서 파일 #개 변경됨}}",
+      incompleteNote:
+        "턴이 중단되어 종료 상태는 이 대화 상자를 열 때 캡처되었습니다.",
+      loadFailed: "체크포인트 변경 사항을 불러오지 못했습니다.",
+      noDiff: "diff 출력이 없습니다.",
+      notFound: "이 체크포인트는 더 이상 사용할 수 없습니다.",
+      overwriteAnyway: "덮어쓰기",
+      restoreConflict:
+        "{count, plural, other {파일 #개에 이 답변의 변경과 겹치는 이후 편집이 있습니다. 복원하면 해당 편집이 사라집니다.}}",
+      restoreFailed: "파일을 복원하지 못했습니다.",
+      restoreSelected: "{count, plural, =0 {복원} other {파일 #개 복원}}",
+      restored: "복원됨",
+      restoredCount: "{count, plural, other {#개 복원됨}}",
+      selectAll: "모두 선택",
+      statusAdded: "추가됨",
+      statusDeleted: "삭제됨",
+      statusModified: "수정됨",
+      statusRenamed: "이름 변경됨",
+      title: "이 답변의 변경 사항",
+      viewTurnChanges: "이 답변의 파일 변경 사항 보기",
+    },
+    settings: {
+      changeCheckpoints: "변경 체크포인트",
+      changeCheckpointsDescription:
+        "각 답변 전에 프로젝트 파일을 스냅샷하여 변경 사항을 확인하고 복원할 수 있습니다",
+    },
     common: {
       archive: "아카이브",
       branch: "분기",
@@ -2949,6 +3188,40 @@ export const supplementalMessages = {
     },
   },
   pt: {
+    checkpoints: {
+      binaryFile: "Arquivo binário — diff indisponível.",
+      description:
+        "Veja os arquivos alterados por esta resposta e restaure os que quiser.",
+      editedLater: "Editado depois",
+      emptyState: "Esta resposta não alterou nenhum arquivo.",
+      filesChanged:
+        "{count, plural, =0 {Nenhum arquivo alterado} =1 {1 arquivo alterado nesta resposta} other {# arquivos alterados nesta resposta}}",
+      incompleteNote:
+        "O turno foi interrompido, então o estado final foi capturado ao abrir esta janela.",
+      loadFailed: "Não foi possível carregar as alterações do checkpoint.",
+      noDiff: "Nenhuma saída de diff disponível.",
+      notFound: "Este checkpoint não está mais disponível.",
+      overwriteAnyway: "Sobrescrever mesmo assim",
+      restoreConflict:
+        "{count, plural, =1 {1 arquivo tem edições posteriores que se sobrepõem às alterações desta resposta. Restaurá-lo descartará essas edições.} other {# arquivos têm edições posteriores que se sobrepõem às alterações desta resposta. Restaurá-los descartará essas edições.}}",
+      restoreFailed: "Não foi possível restaurar os arquivos.",
+      restoreSelected:
+        "{count, plural, =0 {Restaurar} =1 {Restaurar 1 arquivo} other {Restaurar # arquivos}}",
+      restored: "Restaurado",
+      restoredCount: "{count, plural, =1 {1 restaurado} other {# restaurados}}",
+      selectAll: "Selecionar tudo",
+      statusAdded: "Adicionado",
+      statusDeleted: "Excluído",
+      statusModified: "Modificado",
+      statusRenamed: "Renomeado",
+      title: "Alterações nesta resposta",
+      viewTurnChanges: "Ver alterações de arquivos desta resposta",
+    },
+    settings: {
+      changeCheckpoints: "Checkpoints de alterações",
+      changeCheckpointsDescription:
+        "Captura os arquivos do projeto antes de cada resposta para revisar e restaurar alterações",
+    },
     common: {
       archive: "Arquivo",
       branch: "Filial",
@@ -3369,6 +3642,40 @@ export const supplementalMessages = {
     },
   },
   vi: {
+    checkpoints: {
+      binaryFile: "Tệp nhị phân — không có diff.",
+      description:
+        "Xem các tệp mà phản hồi này đã thay đổi và khôi phục tệp bạn muốn.",
+      editedLater: "Đã sửa sau đó",
+      emptyState: "Phản hồi này không thay đổi tệp nào.",
+      filesChanged:
+        "{count, plural, =0 {Không có tệp nào thay đổi} other {# tệp đã thay đổi trong phản hồi này}}",
+      incompleteNote:
+        "Lượt này bị gián đoạn nên trạng thái kết thúc được ghi lại khi bạn mở hộp thoại này.",
+      loadFailed: "Không tải được các thay đổi của checkpoint.",
+      noDiff: "Không có đầu ra diff.",
+      notFound: "Checkpoint này không còn khả dụng.",
+      overwriteAnyway: "Vẫn ghi đè",
+      restoreConflict:
+        "{count, plural, other {# tệp có chỉnh sửa sau này trùng với thay đổi của phản hồi này. Khôi phục sẽ loại bỏ các chỉnh sửa đó.}}",
+      restoreFailed: "Không khôi phục được tệp.",
+      restoreSelected:
+        "{count, plural, =0 {Khôi phục} other {Khôi phục # tệp}}",
+      restored: "Đã khôi phục",
+      restoredCount: "{count, plural, other {# đã khôi phục}}",
+      selectAll: "Chọn tất cả",
+      statusAdded: "Đã thêm",
+      statusDeleted: "Đã xóa",
+      statusModified: "Đã sửa",
+      statusRenamed: "Đã đổi tên",
+      title: "Thay đổi trong phản hồi này",
+      viewTurnChanges: "Xem các tệp thay đổi trong phản hồi này",
+    },
+    settings: {
+      changeCheckpoints: "Checkpoint thay đổi",
+      changeCheckpointsDescription:
+        "Chụp nhanh tệp dự án trước mỗi phản hồi để xem và khôi phục thay đổi",
+    },
     common: {
       archive: "Lưu trữ",
       branch: "Chi nhánh",
@@ -3785,6 +4092,37 @@ export const supplementalMessages = {
     },
   },
   "zh-Hans": {
+    checkpoints: {
+      binaryFile: "二进制文件 — 无法显示差异。",
+      description: "查看此回复更改的文件，并按需恢复。",
+      editedLater: "之后已编辑",
+      emptyState: "此回复未更改任何文件。",
+      filesChanged:
+        "{count, plural, =0 {没有文件被更改} other {此回复更改了 # 个文件}}",
+      incompleteNote: "该轮次被中断，因此结束状态是在打开此对话框时捕获的。",
+      loadFailed: "无法加载检查点更改。",
+      noDiff: "没有可用的差异输出。",
+      notFound: "此检查点已不可用。",
+      overwriteAnyway: "仍然覆盖",
+      restoreConflict:
+        "{count, plural, other {# 个文件有与此回复更改重叠的后续编辑。恢复将丢弃这些编辑。}}",
+      restoreFailed: "无法恢复文件。",
+      restoreSelected: "{count, plural, =0 {恢复} other {恢复 # 个文件}}",
+      restored: "已恢复",
+      restoredCount: "{count, plural, other {已恢复 # 个}}",
+      selectAll: "全选",
+      statusAdded: "已添加",
+      statusDeleted: "已删除",
+      statusModified: "已修改",
+      statusRenamed: "已重命名",
+      title: "此回复中的更改",
+      viewTurnChanges: "查看此回复的文件更改",
+    },
+    settings: {
+      changeCheckpoints: "更改检查点",
+      changeCheckpointsDescription:
+        "在每次回复前为项目文件创建快照，以便查看和恢复更改",
+    },
     common: {
       archive: "存档",
       branch: "分支",
@@ -4187,6 +4525,37 @@ export const supplementalMessages = {
     },
   },
   "zh-Hant": {
+    checkpoints: {
+      binaryFile: "二進位檔案 — 無法顯示差異。",
+      description: "檢視此回覆變更的檔案，並視需要還原。",
+      editedLater: "之後已編輯",
+      emptyState: "此回覆未變更任何檔案。",
+      filesChanged:
+        "{count, plural, =0 {沒有檔案被變更} other {此回覆變更了 # 個檔案}}",
+      incompleteNote: "此輪次已中斷，因此結束狀態是在開啟此對話方塊時擷取的。",
+      loadFailed: "無法載入檢查點變更。",
+      noDiff: "沒有可用的差異輸出。",
+      notFound: "此檢查點已不可用。",
+      overwriteAnyway: "仍然覆寫",
+      restoreConflict:
+        "{count, plural, other {# 個檔案有與此回覆變更重疊的後續編輯。還原將捨棄這些編輯。}}",
+      restoreFailed: "無法還原檔案。",
+      restoreSelected: "{count, plural, =0 {還原} other {還原 # 個檔案}}",
+      restored: "已還原",
+      restoredCount: "{count, plural, other {已還原 # 個}}",
+      selectAll: "全選",
+      statusAdded: "已新增",
+      statusDeleted: "已刪除",
+      statusModified: "已修改",
+      statusRenamed: "已重新命名",
+      title: "此回覆中的變更",
+      viewTurnChanges: "檢視此回覆的檔案變更",
+    },
+    settings: {
+      changeCheckpoints: "變更檢查點",
+      changeCheckpointsDescription:
+        "在每次回覆前為專案檔案建立快照，以便檢視和還原變更",
+    },
     common: {
       archive: "存檔",
       branch: "分支",

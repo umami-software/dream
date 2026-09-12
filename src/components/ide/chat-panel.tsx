@@ -1135,6 +1135,7 @@ export const ChatPanel = ({
               remoteConversationProjectPath:
                 remoteConversationProjectPathForRequest,
               chatId: chat.id,
+              checkpointsEnabled: settings.changeCheckpoints,
             },
           },
         );
@@ -1172,6 +1173,7 @@ export const ChatPanel = ({
       selectedReasoningLabelForMetadata,
       sendMessage,
       setChatTitleGenerating,
+      settings.changeCheckpoints,
       scrollConversationToBottom,
       chat,
       updateChat,
