@@ -278,6 +278,9 @@ export const TerminalPanel = ({
     (s) => s.terminalTransport[sessionId] ?? "pty",
   );
   const terminalSizeRef = useRef<{ cols: number; rows: number } | null>(null);
+  const themeRef = useRef(resolvedTheme);
+  themeRef.current = resolvedTheme;
+  const fitTerminalRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     transportRef.current = terminalTransport;
@@ -306,7 +309,7 @@ export const TerminalPanel = ({
       fontFamily: resolveTerminalFontFamily(host),
       fontSize: 12,
       minimumContrastRatio: 4.5,
-      theme: resolveTerminalTheme(host, resolvedTheme),
+      theme: resolveTerminalTheme(host, themeRef.current),
     });
     terminalInstanceRef.current = terminal;
 
@@ -352,6 +355,8 @@ export const TerminalPanel = ({
 
     const fitAndSyncSize = () => {
       resizeFrame = null;
+      // Hidden tabs retain their last valid size and continue parsing output.
+      if (host.clientWidth === 0 || host.clientHeight === 0) return;
       fitAddon.fit();
 
       const cols = terminal.cols;
@@ -382,6 +387,8 @@ export const TerminalPanel = ({
       resizeFrame = window.requestAnimationFrame(fitAndSyncSize);
     };
 
+    fitTerminalRef.current = scheduleFitAndSyncSize;
+    terminalSizeRef.current = null;
     fitAndSyncSize();
 
     const initialOutput = getTerminalScrollback(sessionId);
@@ -393,9 +400,12 @@ export const TerminalPanel = ({
       void onStart?.();
     }
 
-    const removeTerminalData = subscribeToTerminalOutput(sessionId, (chunk) => {
-      terminal.write(stylePowerShellUpdateNotification(chunk));
-    });
+    const removeTerminalData = subscribeToTerminalOutput(
+      sessionId,
+      (chunk, processed) => {
+        terminal.write(stylePowerShellUpdateNotification(chunk), processed);
+      },
+    );
 
     const inputSubscription = terminal.onData((data) => {
       const api = getDesktopApi();
@@ -426,9 +436,10 @@ export const TerminalPanel = ({
       resizeObserver.disconnect();
       window.removeEventListener("resize", scheduleFitAndSyncSize);
       terminalInstanceRef.current = null;
+      fitTerminalRef.current = null;
       terminal.dispose();
     };
-  }, [autoStart, onStart, projectId, resolvedTheme, sessionId]);
+  }, [autoStart, onStart, projectId, sessionId]);
 
   useEffect(() => {
     if (!isActive) {
@@ -436,6 +447,7 @@ export const TerminalPanel = ({
     }
 
     const frame = window.requestAnimationFrame(() => {
+      fitTerminalRef.current?.();
       terminalInstanceRef.current?.focus();
     });
 
@@ -634,14 +646,12 @@ export const ProjectTerminalTabsPanel = ({
 
           return (
             <div
-              aria-hidden={!isActive}
+              aria-hidden={!active || !isActive}
               className={cn(
                 "absolute inset-0 min-h-0",
-                isActive
-                  ? "visible pointer-events-auto"
-                  : "invisible pointer-events-none",
+                active && isActive ? "block" : "hidden",
               )}
-              inert={!isActive}
+              inert={!active || !isActive}
               key={sessionId}
             >
               <TerminalPanel

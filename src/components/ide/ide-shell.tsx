@@ -247,7 +247,16 @@ export const IdeShell = () => {
     if (!desktopApi) return;
 
     const removeTerminalData = desktopApi.onTerminalData((event) => {
-      publishTerminalOutput(event.projectId, event.chunk);
+      const { projectId, generation, sequence } = event;
+      publishTerminalOutput(projectId, event.chunk, () => {
+        if (generation !== undefined && sequence !== undefined) {
+          desktopApi.acknowledgeTerminalOutput({
+            projectId,
+            generation,
+            sequence,
+          });
+        }
+      });
     });
 
     const removeTerminalStatus = desktopApi.onTerminalStatus((event) => {

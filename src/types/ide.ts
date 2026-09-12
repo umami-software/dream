@@ -199,6 +199,25 @@ export interface PersistedIdeState {
 export interface TerminalDataEvent {
   projectId: string;
   chunk: string;
+  generation?: string;
+  sequence?: number;
+}
+
+export interface TerminalOutputAcknowledgment {
+  projectId: string;
+  generation: string;
+  sequence: number;
+}
+
+export interface TerminalOutputDiagnostics {
+  projectId: string;
+  outstanding: number;
+  queued: number;
+  pendingBatches: number;
+  paused: boolean;
+  peakOutstanding: number;
+  maxAcknowledgmentMs: number;
+  pauseDurationMs: number;
 }
 
 export interface TerminalStatusEvent {
@@ -646,6 +665,8 @@ export interface DesktopApi {
     shell?: string;
   }>;
   sendTerminalInput: (payload: TerminalInputPayload) => void;
+  acknowledgeTerminalOutput: (payload: TerminalOutputAcknowledgment) => void;
+  getTerminalOutputDiagnostics: () => Promise<TerminalOutputDiagnostics[]>;
   resizeTerminal: (payload: TerminalResizePayload) => void;
   stopTerminal: (projectId: string) => Promise<boolean>;
   stopAllTerminals: () => Promise<boolean>;

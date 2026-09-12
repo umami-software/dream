@@ -7,10 +7,15 @@ interface TerminalScrollbackBuffer {
   length: number;
 }
 
-type TerminalOutputListener = (chunk: string) => void;
+type TerminalOutputListener = (chunk: string, processed: () => void) => void;
+
+interface TerminalOutputSubscription {
+  listener: TerminalOutputListener;
+  pending: Set<() => void>;
+}
 
 const scrollbackBySessionId = new Map<string, TerminalScrollbackBuffer>();
-const listenersBySessionId = new Map<string, Set<TerminalOutputListener>>();
+const listenersBySessionId = new Map<string, Set<TerminalOutputSubscription>>();
 
 const createBuffer = (): TerminalScrollbackBuffer => ({
   chunks: [],
@@ -75,6 +80,9 @@ export const resetTerminalScrollback = (sessionId: string) => {
 
 export const deleteTerminalScrollback = (sessionId: string) => {
   scrollbackBySessionId.delete(sessionId);
+  for (const subscription of listenersBySessionId.get(sessionId) ?? []) {
+    for (const processed of subscription.pending) processed();
+  }
   listenersBySessionId.delete(sessionId);
 };
 
@@ -96,15 +104,35 @@ export const getTerminalScrollback = (sessionId: string) => {
   ].join("");
 };
 
-export const publishTerminalOutput = (sessionId: string, chunk: string) => {
+export const publishTerminalOutput = (
+  sessionId: string,
+  chunk: string,
+  acknowledge: () => void = () => {},
+) => {
   const buffer = scrollbackBySessionId.get(sessionId);
   if (!buffer || !chunk) {
+    acknowledge();
     return false;
   }
 
   appendToBuffer(buffer, chunk);
-  for (const listener of listenersBySessionId.get(sessionId) ?? []) {
-    listener(chunk);
+  const subscriptions = [...(listenersBySessionId.get(sessionId) ?? [])];
+  let remaining = subscriptions.length;
+  if (remaining === 0) acknowledge();
+  for (const subscription of subscriptions) {
+    const processed = () => {
+      if (!subscription.pending.delete(processed)) return;
+      remaining -= 1;
+      if (remaining === 0) acknowledge();
+    };
+    subscription.pending.add(processed);
+    try {
+      subscription.listener(chunk, processed);
+    } catch (error) {
+      // A disposed/failed consumer must not strand the producer or other views.
+      processed();
+      console.error("Terminal output consumer failed", error);
+    }
   }
 
   return true;
@@ -119,11 +147,16 @@ export const subscribeToTerminalOutput = (
     listeners = new Set();
     listenersBySessionId.set(sessionId, listeners);
   }
-  listeners.add(listener);
+  const subscription = { listener, pending: new Set<() => void>() };
+  listeners.add(subscription);
 
   return () => {
-    listeners.delete(listener);
-    if (listeners.size === 0) {
+    listeners.delete(subscription);
+    for (const processed of subscription.pending) processed();
+    if (
+      listeners.size === 0 &&
+      listenersBySessionId.get(sessionId) === listeners
+    ) {
       listenersBySessionId.delete(sessionId);
     }
   };

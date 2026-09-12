@@ -166,6 +166,10 @@ contextBridge.exposeInMainWorld("dream", {
   detectTerminalShells: () => ipcRenderer.invoke("terminal:detect-shells"),
   startTerminal: (payload) => ipcRenderer.invoke("terminal:start", payload),
   sendTerminalInput: (payload) => ipcRenderer.send("terminal:input", payload),
+  acknowledgeTerminalOutput: (payload) =>
+    ipcRenderer.send("terminal:acknowledge", payload),
+  getTerminalOutputDiagnostics: () =>
+    ipcRenderer.invoke("terminal:diagnostics"),
   resizeTerminal: (payload) => ipcRenderer.send("terminal:resize", payload),
   stopTerminal: (projectId) =>
     ipcRenderer.invoke("terminal:stop", { projectId }),

@@ -752,6 +752,15 @@ ipcMain.on("terminal:input", (_event, payload) => {
   processSessionManager.writeTerminalInput(payload);
 });
 
+ipcMain.on("terminal:acknowledge", (event, payload) => {
+  if (event.sender !== mainWindow?.webContents) return;
+  processSessionManager.acknowledgeTerminalOutput(payload);
+});
+
+ipcMain.handle("terminal:diagnostics", () =>
+  app.isPackaged ? [] : processSessionManager.getTerminalOutputDiagnostics(),
+);
+
 ipcMain.on("terminal:resize", (_event, payload) => {
   processSessionManager.resizeTerminal(payload);
 });

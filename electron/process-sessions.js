@@ -3,6 +3,7 @@ import { existsSync, statSync } from "node:fs";
 import { app } from "electron";
 import { spawn as spawnPty } from "node-pty";
 import { stopChildProcess, stopProcessTree } from "./process-tree.js";
+import { createTerminalOutput } from "./terminal-output.js";
 import { getDefaultTerminalShellPath } from "./terminal-shells.js";
 
 function parseCommandParts(value) {
@@ -166,15 +167,26 @@ export function createProcessSessionManager({ sendToRenderer }) {
   const terminalSessions = new Map();
   const terminalTransports = new Map();
   const terminalShells = new Map();
+  const terminalOutputs = new Map();
+  const terminalStartupTimers = new Map();
+
+  function clearTerminalStartupTimer(projectId) {
+    clearTimeout(terminalStartupTimers.get(projectId));
+    terminalStartupTimers.delete(projectId);
+  }
 
   function writeTerminalStartupCommands(projectId, commands, delayMs = 80) {
     if (!Array.isArray(commands) || commands.length === 0) {
       return;
     }
 
-    setTimeout(() => {
-      const session = terminalSessions.get(projectId);
-      if (!session) {
+    clearTerminalStartupTimer(projectId);
+    const session = terminalSessions.get(projectId);
+    const timer = setTimeout(() => {
+      if (terminalStartupTimers.get(projectId) === timer) {
+        terminalStartupTimers.delete(projectId);
+      }
+      if (!session || terminalSessions.get(projectId) !== session) {
         return;
       }
 
@@ -184,6 +196,7 @@ export function createProcessSessionManager({ sendToRenderer }) {
         // ignore write failures after session exits
       }
     }, delayMs);
+    terminalStartupTimers.set(projectId, timer);
   }
 
   async function stopRunProcess(projectId) {
@@ -201,6 +214,7 @@ export function createProcessSessionManager({ sendToRenderer }) {
   }
 
   async function stopTerminalSession(projectId) {
+    clearTerminalStartupTimer(projectId);
     const session = terminalSessions.get(projectId);
     const transport = terminalTransports.get(projectId);
     const shell = terminalShells.get(projectId);
@@ -208,6 +222,8 @@ export function createProcessSessionManager({ sendToRenderer }) {
       return;
     }
 
+    terminalOutputs.get(projectId)?.dispose();
+    terminalOutputs.delete(projectId);
     terminalSessions.delete(projectId);
     terminalTransports.delete(projectId);
     terminalShells.delete(projectId);
@@ -403,6 +419,19 @@ export function createProcessSessionManager({ sendToRenderer }) {
         return { status: "stopped" };
       }
 
+      const output = createTerminalOutput({
+        projectId,
+        send: sendToRenderer,
+        pause: () => {
+          child.stdout?.pause();
+          child.stderr?.pause();
+        },
+        resume: () => {
+          child.stdout?.resume();
+          child.stderr?.resume();
+        },
+      });
+      terminalOutputs.set(projectId, output);
       terminalSessions.set(projectId, {
         kill: () => {
           try {
@@ -448,20 +477,19 @@ export function createProcessSessionManager({ sendToRenderer }) {
       }
 
       child.stdout?.on("data", (chunk) => {
-        sendToRenderer("terminal:data", {
-          chunk: chunk.toString(),
-          projectId,
-        });
+        output.write(chunk.toString());
       });
 
       child.stderr?.on("data", (chunk) => {
-        sendToRenderer("terminal:data", {
-          chunk: chunk.toString(),
-          projectId,
-        });
+        output.write(chunk.toString());
       });
 
       child.on("close", (code, signal) => {
+        if (terminalOutputs.get(projectId) !== output) return;
+        clearTerminalStartupTimer(projectId);
+        output.flush();
+        output.dispose();
+        terminalOutputs.delete(projectId);
         terminalSessions.delete(projectId);
         terminalTransports.delete(projectId);
         terminalShells.delete(projectId);
@@ -476,6 +504,11 @@ export function createProcessSessionManager({ sendToRenderer }) {
       });
 
       child.on("error", (error) => {
+        if (terminalOutputs.get(projectId) !== output) return;
+        clearTerminalStartupTimer(projectId);
+        output.flush();
+        output.dispose();
+        terminalOutputs.delete(projectId);
         terminalSessions.delete(projectId);
         terminalTransports.delete(projectId);
         terminalShells.delete(projectId);
@@ -519,14 +552,21 @@ export function createProcessSessionManager({ sendToRenderer }) {
       transport: "pty",
     });
 
-    terminalSession.onData((chunk) => {
-      sendToRenderer("terminal:data", {
-        chunk,
-        projectId,
-      });
+    const output = createTerminalOutput({
+      projectId,
+      send: sendToRenderer,
+      pause: () => terminalSession.pause(),
+      resume: () => terminalSession.resume(),
     });
+    terminalOutputs.set(projectId, output);
+    terminalSession.onData((chunk) => output.write(chunk));
 
     terminalSession.onExit(({ exitCode, signal }) => {
+      if (terminalOutputs.get(projectId) !== output) return;
+      clearTerminalStartupTimer(projectId);
+      output.flush();
+      output.dispose();
+      terminalOutputs.delete(projectId);
       terminalSessions.delete(projectId);
       terminalTransports.delete(projectId);
       terminalShells.delete(projectId);
@@ -600,6 +640,13 @@ export function createProcessSessionManager({ sendToRenderer }) {
   }
 
   return {
+    acknowledgeTerminalOutput: (event) => {
+      if (event && typeof event.projectId === "string") {
+        terminalOutputs.get(event.projectId)?.acknowledge(event);
+      }
+    },
+    getTerminalOutputDiagnostics: () =>
+      [...terminalOutputs.values()].map((output) => output.getDiagnostics()),
     hasActiveSessions,
     resizeTerminal,
     startRunner,
