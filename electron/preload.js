@@ -178,6 +178,8 @@ contextBridge.exposeInMainWorld("dream", {
   onTerminalStatus: (listener) => subscribe("terminal:status", listener),
 
   updateBrowser: (payload) => ipcRenderer.send("browser:update", payload),
+  captureBrowserPage: (payload) =>
+    ipcRenderer.invoke("browser:capture-page", payload),
   onBrowserError: (listener) => subscribe("browser:error", listener),
   onBrowserPageState: (listener) => subscribe("browser:page-state", listener),
   onBrowserStatus: (listener) => subscribe("browser:status", listener),

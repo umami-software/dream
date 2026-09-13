@@ -10,6 +10,7 @@ import {
   formatDiffReferenceMessage,
   getFirstActiveDiffChatId,
 } from "./diff-feedback";
+import { queueFeedbackSubmit, resolveFeedbackChatId } from "./feedback-chat";
 import { useIdeStore } from "./ide-store";
 
 export interface DiffFeedbackTarget {
@@ -147,47 +148,18 @@ export function InlineDiffFeedback({
         target.previousPath,
         options?.diffStyle,
       );
-      const state = useIdeStore.getState();
-      const project = state.projects.find((p) => p.id === target.projectId);
-      if (!project || state.activeProjectId !== target.projectId)
-        throw new Error("Open this project before sending a message.");
-      let chatId = newChat
-        ? (createdChatId ?? "new")
-        : getFirstActiveDiffChatId(project, state.chats);
-      if (!chatId) throw new Error("Open a chat or enable New chat.");
-      if (chatId === "new") {
-        const createdId = project.ui.multiChat
-          ? state.addChatBeside(project.id)
-          : state.addChat(project.id, undefined, { forceNew: true });
-        if (!createdId) throw new Error("Unable to create a chat.");
-        chatId = createdId;
-        // Retry in the same new chat if loading or provider setup fails.
-        setCreatedChatId(chatId);
-      } else {
-        const chat = state.chats.find(
-          (c) =>
-            c.id === chatId &&
-            c.projectId === project.id &&
-            c.deletedAt === null,
-        );
-        if (!chat) throw new Error("Choose an available chat.");
-        if (state.streamingChatIds[chatId])
-          throw new Error(
-            "This chat is busy. Choose another chat or wait for it to finish.",
-          );
-        state.setActiveChatId(project.id, chatId);
-      }
-      if (
-        !useIdeStore.getState().queueChatSubmit(chatId, {
-          text,
-          references: [],
-          preserveDraft: true,
-        })
-      ) {
-        throw new Error(
-          "This chat already has a message in progress. Try again when it finishes.",
-        );
-      }
+      const chat = resolveFeedbackChatId({
+        createdChatId,
+        newChat,
+        projectId: target.projectId,
+      });
+      // Retry in the same new chat if loading or provider setup fails.
+      if (chat.created) setCreatedChatId(chat.chatId);
+      queueFeedbackSubmit(chat.chatId, {
+        text,
+        references: [],
+        preserveDraft: true,
+      });
       cancel();
     } catch (cause) {
       setError(

@@ -123,6 +123,52 @@ export function createBrowserSessionManager({ getMainWindow, sendToRenderer }) {
     }
   }
 
+  async function capturePage(payload) {
+    const webContentsId = Number(payload?.webContentsId);
+    if (!Number.isInteger(webContentsId) || webContentsId <= 0) {
+      return null;
+    }
+
+    const guest = webContents.fromId(webContentsId);
+    if (!guest || guest.isDestroyed()) {
+      return null;
+    }
+
+    const rect = payload?.rect;
+    const captureRect =
+      rect &&
+      [rect.x, rect.y, rect.width, rect.height].every(
+        (value) => Number.isFinite(value) && value >= 0,
+      ) &&
+      rect.width >= 1 &&
+      rect.height >= 1
+        ? {
+            height: Math.round(rect.height),
+            width: Math.round(rect.width),
+            x: Math.round(rect.x),
+            y: Math.round(rect.y),
+          }
+        : undefined;
+
+    try {
+      const image = await guest.capturePage(captureRect);
+      if (image.isEmpty()) {
+        return null;
+      }
+
+      const { height, width } = image.getSize();
+      return {
+        dataUrl: image.toDataURL(),
+        height,
+        title: guest.getTitle(),
+        url: guest.getURL(),
+        width,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   function openBrowserDevTools(payload) {
     const guest = getGuestWebContents(payload, "DevTools");
     if (!guest) {
@@ -167,6 +213,7 @@ export function createBrowserSessionManager({ getMainWindow, sendToRenderer }) {
 
   return {
     applyState: () => {},
+    capturePage,
     hideForRendererNavigation: () => {},
     reset: () => {},
     update,

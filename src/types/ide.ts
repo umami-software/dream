@@ -1,5 +1,5 @@
 import type { FileDiffMetadata } from "@pierre/diffs/react";
-import type { UIMessage } from "ai";
+import type { FileUIPart, UIMessage } from "ai";
 import type { AppLocale } from "@/i18n/config";
 import type { SparklesPaletteName } from "@/lib/sparkles-palettes";
 
@@ -92,6 +92,7 @@ export interface StashItem {
 }
 
 export interface PendingChatSubmit {
+  files?: FileUIPart[];
   preserveDraft?: boolean;
   references: ProjectReference[];
   text: string;
@@ -656,6 +657,20 @@ export interface BrowserUpdatePayload {
   webContentsId?: number;
 }
 
+export interface BrowserCapturePayload {
+  /** Area of the guest view to capture, in device-independent pixels. */
+  rect?: { height: number; width: number; x: number; y: number };
+  webContentsId: number;
+}
+
+export interface BrowserCaptureResult {
+  dataUrl: string;
+  height: number;
+  title: string;
+  url: string;
+  width: number;
+}
+
 export interface DesktopApi {
   isElectron: true;
   apiSessionToken: string;
@@ -719,6 +734,9 @@ export interface DesktopApi {
   ) => () => void;
 
   updateBrowser: (payload: BrowserUpdatePayload) => void;
+  captureBrowserPage: (
+    payload: BrowserCapturePayload,
+  ) => Promise<BrowserCaptureResult | null>;
   onBrowserError: (listener: (event: BrowserErrorEvent) => void) => () => void;
   onBrowserPageState: (
     listener: (event: BrowserPageStateEvent) => void,

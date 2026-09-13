@@ -1197,7 +1197,9 @@ export const ChatPanel = ({
       const nextSubmit = takePendingChatSubmit(chat.id);
       if (
         !nextSubmit ||
-        (!nextSubmit.text.trim() && nextSubmit.references.length === 0)
+        (!nextSubmit.text.trim() &&
+          nextSubmit.references.length === 0 &&
+          !nextSubmit.files?.length)
       ) {
         return;
       }
@@ -1211,7 +1213,7 @@ export const ChatPanel = ({
       void handleSubmitRef
         .current(
           {
-            files: [],
+            files: nextSubmit.files ?? [],
             references: nextSubmit.references,
             text: nextSubmit.text,
           },

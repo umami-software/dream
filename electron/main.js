@@ -783,6 +783,10 @@ ipcMain.on("browser:update", (_event, payload) => {
   browserSessionManager.update(payload);
 });
 
+ipcMain.handle("browser:capture-page", (_event, payload) =>
+  browserSessionManager.capturePage(payload),
+);
+
 app.whenReady().then(async () => {
   configureDetachedDevToolsShortcuts();
   configureApplicationMenu(app, APP_NAME, {

@@ -6,6 +6,10 @@ declare global {
     canGoBack: () => boolean;
     canGoForward: () => boolean;
     capturePage?: () => Promise<{ toPNG: () => Uint8Array }>;
+    executeJavaScript: (
+      code: string,
+      userGesture?: boolean,
+    ) => Promise<unknown>;
     getTitle: () => string;
     getURL: () => string;
     getWebContentsId: () => number;

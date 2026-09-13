@@ -11,6 +11,7 @@ import {
   Maximize2,
   Minimize2,
   Minus,
+  MousePointerClick,
   Plus,
   RotateCcw,
   RotateCw,
@@ -38,6 +39,16 @@ import { Spinner } from "@/components/ui/spinner";
 import { getDesktopApi } from "@/lib/electron";
 import { cn } from "@/lib/utils";
 import type { BrowserTabState, ProjectConfig } from "@/types/ide";
+import {
+  BrowserElementFeedback,
+  type BrowserElementSelection,
+} from "./browser-element-feedback";
+import { getElementCaptureRect } from "./browser-feedback";
+import {
+  BROWSER_INSPECTOR_CANCEL_SCRIPT,
+  BROWSER_INSPECTOR_SCRIPT,
+  type InspectedElement,
+} from "./browser-inspector-script";
 import { normalizeBrowserUrlInput } from "./browser-url";
 import { useIdeStore } from "./ide-store";
 import { RightPanelHeaderIconButton } from "./right-panel-header-icon-button";
@@ -254,6 +265,9 @@ const BrowserPanelImpl = ({
   const browserT = useTranslations("browser");
   const webviewRefs = useRef(new Map<string, ElectronWebviewElement>());
   const [browserUrlDraft, setBrowserUrlDraft] = useState("");
+  const [elementSelection, setElementSelection] =
+    useState<BrowserElementSelection | null>(null);
+  const [inspectingTabId, setInspectingTabId] = useState<string | null>(null);
 
   const browserError = useIdeStore((state) => state.browserError);
   const browserLoading = useIdeStore((state) => state.browserLoading);
@@ -706,6 +720,96 @@ const BrowserPanelImpl = ({
     handleBrowserUtilityAction({ takeScreenshot: true });
   }, [handleBrowserUtilityAction]);
 
+  const closeElementFeedback = useCallback(() => setElementSelection(null), []);
+
+  const isInspecting = !!activeTab && inspectingTabId === activeTab.id;
+
+  const handleStopInspecting = useCallback(() => {
+    setInspectingTabId(null);
+    const webview = getActiveWebview();
+    void webview
+      ?.executeJavaScript(BROWSER_INSPECTOR_CANCEL_SCRIPT)
+      .catch(() => {
+        // The page may have navigated away; nothing left to cancel.
+      });
+  }, [getActiveWebview]);
+
+  const handleStartInspecting = useCallback(async () => {
+    const webview = getActiveWebview();
+    if (!activeTab?.url || !webview) {
+      return;
+    }
+
+    const tabId = activeTab.id;
+    setBrowserError(null);
+    setElementSelection(null);
+    setInspectingTabId(tabId);
+    let element: InspectedElement | null = null;
+    try {
+      element = (await webview.executeJavaScript(
+        BROWSER_INSPECTOR_SCRIPT,
+        true,
+      )) as InspectedElement | null;
+    } catch {
+      setBrowserError(browserT("inspectFailed"));
+    } finally {
+      setInspectingTabId((current) => (current === tabId ? null : current));
+    }
+
+    if (!element) {
+      return;
+    }
+
+    let imageDataUrl: string | null = null;
+    const rect = getElementCaptureRect(element, getWebviewZoomFactor(webview));
+    if (rect) {
+      try {
+        const capture = await getDesktopApi()?.captureBrowserPage({
+          rect,
+          webContentsId: webview.getWebContentsId(),
+        });
+        imageDataUrl = capture?.dataUrl ?? null;
+      } catch {
+        // The text description still carries the element; skip the image.
+      }
+    }
+
+    setElementSelection({ element, imageDataUrl, tabId });
+  }, [activeTab, browserT, getActiveWebview, setBrowserError]);
+
+  const handleToggleInspecting = useCallback(() => {
+    if (isInspecting) {
+      handleStopInspecting();
+      return;
+    }
+
+    void handleStartInspecting();
+  }, [handleStartInspecting, handleStopInspecting, isInspecting]);
+
+  useEffect(() => {
+    if (!isInspecting) {
+      return;
+    }
+
+    // Escape in the host window cancels too, since the guest may not be focused.
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        handleStopInspecting();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleStopInspecting, isInspecting]);
+
+  useEffect(() => {
+    // A navigation tears down the injected picker and any picked node.
+    if (isBrowserLoading) {
+      setInspectingTabId(null);
+      setElementSelection(null);
+    }
+  }, [isBrowserLoading]);
+
   return (
     <div
       id={`browser-panel-${projectId}`}
@@ -838,6 +942,29 @@ const BrowserPanelImpl = ({
           ) : null}
         </div>
 
+        <button
+          aria-label={browserT("selectElement")}
+          aria-pressed={isInspecting}
+          className={cn(
+            "rounded p-1 transition-colors",
+            isInspecting
+              ? "bg-blue-500/15 text-blue-600 hover:bg-blue-500/25 dark:text-blue-400"
+              : activeTab?.url
+                ? "text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "text-surface-400 dark:text-surface-600",
+          )}
+          disabled={!activeTab?.url}
+          onClick={handleToggleInspecting}
+          title={
+            isInspecting
+              ? browserT("selectElementHint")
+              : browserT("selectElement")
+          }
+          type="button"
+        >
+          <MousePointerClick className="size-4" />
+        </button>
+
         <DropdownMenu>
           <DropdownMenuTrigger
             render={
@@ -865,6 +992,10 @@ const BrowserPanelImpl = ({
             <DropdownMenuItem onClick={handleTakeScreenshot}>
               <Camera className="size-4" />
               {browserT("takeScreenshot")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleToggleInspecting}>
+              <MousePointerClick className="size-4" />
+              {browserT("selectElement")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={handleOpenDevTools}>
               <Code2 className="size-4" />
@@ -939,6 +1070,16 @@ const BrowserPanelImpl = ({
             <div className="flex h-full items-center justify-center bg-background px-6 text-center text-muted-foreground text-sm">
               {browserT("enterUrlToStart")}
             </div>
+          ) : null}
+          {shouldMountBrowserWebview &&
+          elementSelection &&
+          elementSelection.tabId === activeTab?.id ? (
+            <BrowserElementFeedback
+              key={elementSelection.element.selector}
+              onClose={closeElementFeedback}
+              projectId={projectId}
+              selection={elementSelection}
+            />
           ) : null}
           {shouldMountBrowserWebview && browserError ? (
             <div className="pointer-events-none absolute right-3 bottom-3 left-3 rounded-md border border-destructive-border bg-background px-3 py-2 text-destructive text-xs shadow-sm">

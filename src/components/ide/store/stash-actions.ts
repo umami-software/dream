@@ -164,7 +164,9 @@ export const createStashActions = (
       chat.projectId !== state.activeProjectId ||
       state.streamingChatIds[chatId] ||
       state.pendingChatSubmitByChatId[chatId] ||
-      (!submission.text.trim() && submission.references.length === 0)
+      (!submission.text.trim() &&
+        submission.references.length === 0 &&
+        !submission.files?.length)
     )
       return false;
     set({
