@@ -2,7 +2,7 @@
   "name": "dream",
   "productName": "Dream",
   "description": "Dream is a desktop IDE for working with AI coding agents.",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "private": true,
   "scripts": {
     "dev": "pnpm electron:dev",
