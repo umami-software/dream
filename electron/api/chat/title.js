@@ -231,7 +231,7 @@ const generateClaudeChatTitle = async ({ model, projectPath, promptText }) => {
         : {}),
     }),
     prompt: buildChatTitlePrompt(promptText).join("\n"),
-    system: CHAT_TITLE_SYSTEM_PROMPT,
+    instructions: CHAT_TITLE_SYSTEM_PROMPT,
   });
 
   return sanitizeGeneratedChatTitle(result.text);

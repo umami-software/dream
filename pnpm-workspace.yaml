@@ -27,3 +27,8 @@ onlyBuiltDependencies:
   - esbuild
   - msw
   - node-pty
+
+minimumReleaseAgeExclude:
+  - '@ai-sdk/gateway@4.0.80'
+  - '@ai-sdk/react@4.0.102'
+  - ai@7.0.99

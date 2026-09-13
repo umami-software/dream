@@ -2,8 +2,9 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  stepCountIs,
+  isStepCount,
   streamText,
+  toUIMessageStream,
 } from "ai";
 import { claudeCode, getSessionInfo } from "ai-sdk-provider-claude-code";
 import { resolveProjectPath } from "../project-git/files.js";
@@ -32,57 +33,6 @@ const CLAUDE_PERMISSION_MODE_MAP = {
   "ask-permissions": "default",
   "accept-edits": "acceptEdits",
   "bypass-permissions": "bypassPermissions",
-};
-
-const isClaudeImageMediaType = (mediaType) =>
-  typeof mediaType === "string" &&
-  mediaType.trim().toLowerCase().startsWith("image/");
-
-const isImageDataUrl = (value) =>
-  typeof value === "string" && /^data:image\/[^;,]+(?:;[^,]*)?,/i.test(value);
-
-const normalizeClaudeImageInputs = (modelMessages) => {
-  let hasImageInput = false;
-  let changed = false;
-
-  const normalizedMessages = modelMessages.map((message) => {
-    if (!Array.isArray(message.content)) {
-      return message;
-    }
-
-    let changedContent = false;
-    const content = message.content.map((part) => {
-      if (part?.type === "image") {
-        hasImageInput = true;
-        return part;
-      }
-
-      if (
-        part?.type === "file" &&
-        isClaudeImageMediaType(part.mediaType ?? part.mimeType)
-      ) {
-        hasImageInput = true;
-
-        if (isImageDataUrl(part.data)) {
-          changed = true;
-          changedContent = true;
-          return {
-            image: part.data,
-            type: "image",
-          };
-        }
-      }
-
-      return part;
-    });
-
-    return changedContent ? { ...message, content } : message;
-  });
-
-  return {
-    hasImageInput,
-    messages: changed ? normalizedMessages : modelMessages,
-  };
 };
 
 const appendClaudeAttachmentTextToLatestUserMessage = (messages) => {
@@ -520,7 +470,6 @@ export const streamClaudeResponse = async ({
 }) => {
   const usesReasoningModel =
     getModelReasoningEfforts("anthropic", model).length > 0;
-  let usesClaudeImageInput = false;
   const claudePermissionHandlerMode =
     agentMode === "plan"
       ? "ask"
@@ -566,7 +515,7 @@ export const streamClaudeResponse = async ({
         mode: claudePermissionHandlerMode,
         projectPath,
       }),
-      streamingInput: usesClaudeImageInput ? "always" : "auto",
+      streamingInput: "auto",
       continue: false,
       cwd: projectPath,
       persistSession: true,
@@ -645,9 +594,6 @@ export const streamClaudeResponse = async ({
     modelMessages = await convertToModelMessages(
       appendClaudeAttachmentTextToLatestUserMessage(messagesForModel),
     );
-    const normalized = normalizeClaudeImageInputs(modelMessages);
-    modelMessages = normalized.messages;
-    usesClaudeImageInput = normalized.hasImageInput;
   } catch (err) {
     console.error("[chat] Failed to convert messages:", err);
     const detail =
@@ -678,16 +624,19 @@ export const streamClaudeResponse = async ({
       const textResult = streamText({
         messages: modelMessages,
         model: providerFactory(model, writer),
-        stopWhen: stepCountIs(
+        stopWhen: isStepCount(
           usesReasoningModel
             ? REASONING_TOOL_STEP_LIMIT
             : DEFAULT_TOOL_STEP_LIMIT,
         ),
-        ...(projectReferencesPrompt ? { system: projectReferencesPrompt } : {}),
+        ...(projectReferencesPrompt
+          ? { instructions: projectReferencesPrompt }
+          : {}),
       });
 
       writer.merge(
-        textResult.toUIMessageStream({
+        toUIMessageStream({
+          stream: textResult.stream,
           messageMetadata: ({ part }) => {
             if (part.type === "finish-step") {
               const sessionId =

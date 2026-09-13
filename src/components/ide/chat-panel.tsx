@@ -26,6 +26,7 @@ import type { PromptInputMessage } from "@/components/ai-elements/prompt-input";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useProjectGitStatus } from "@/hooks/use-project-git-status";
+import { getUsageReasoningTokens } from "@/lib/ai-usage";
 import {
   getConnectedProviders,
   getDefaultGitGenerationModelSelection,
@@ -129,7 +130,7 @@ const getUsageContextTokens = (usage: LanguageModelUsage) => {
   return (
     (usage.inputTokens ?? 0) +
     (usage.outputTokens ?? 0) +
-    (usage.outputTokenDetails?.reasoningTokens ?? usage.reasoningTokens ?? 0)
+    getUsageReasoningTokens(usage)
   );
 };
 

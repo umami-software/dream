@@ -189,7 +189,7 @@ const runClaudePrompt = async ({ model, prompt, projectPath, system }) => {
       strictMcpConfig: true,
     }),
     prompt,
-    system,
+    instructions: system,
   });
 
   return result.text;

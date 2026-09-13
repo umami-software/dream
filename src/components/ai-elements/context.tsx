@@ -10,6 +10,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Progress } from "@/components/ui/progress";
+import { getUsageCacheReadTokens, getUsageReasoningTokens } from "@/lib/ai-usage";
 import { cn } from "@/lib/utils";
 
 const PERCENT_MAX = 100;
@@ -43,9 +44,6 @@ const clampPercent = (value: number) =>
   Math.min(PERCENT_MAX, Math.max(0, value));
 
 const clampRatio = (value: number) => Math.min(1, Math.max(0, value));
-
-const getUsageCacheReadTokens = (usage: LanguageModelUsage | undefined) =>
-  usage?.inputTokenDetails?.cacheReadTokens ?? usage?.cachedInputTokens ?? 0;
 
 const getUsageBillableInputTokens = (
   usage: LanguageModelUsage | undefined,
@@ -346,8 +344,7 @@ export const ContextReasoningUsage = ({
   const aiT = useTranslations("aiElements");
   const format = useFormatter();
   const { usage, modelId } = useContextValue();
-  const reasoningTokens =
-    usage?.outputTokenDetails?.reasoningTokens ?? usage?.reasoningTokens ?? 0;
+  const reasoningTokens = getUsageReasoningTokens(usage);
 
   if (children) {
     return children;
