@@ -5,7 +5,6 @@ import {
   FolderTree,
   History,
   Plug,
-  Search,
   Settings,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -13,7 +12,6 @@ import { useCallback, useMemo, useState } from "react";
 import dreamSvg from "@/assets/dream.svg";
 import { ProviderIcon } from "@/components/ai-elements/provider-icons";
 import { Button } from "@/components/ui/button";
-import { SEARCH_INPUT_GROUP_CLASS_NAME } from "@/components/ui/command";
 import {
   Empty,
   EmptyContent,
@@ -22,14 +20,9 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { SearchInput } from "@/components/ui/search-input";
 import { getDesktopApi } from "@/lib/electron";
 import { getConnectedProviders } from "@/lib/ide-defaults";
-import { cn } from "@/lib/utils";
 import { ProjectTabIcon } from "./header/project-tab-icon";
 import { useIdeStore } from "./ide-store";
 import { ALL_PROVIDERS, getProviderLabel } from "./ide-types";
@@ -112,6 +105,7 @@ const getTimestampMs = (value: string | null | undefined): number => {
 
 export const EmptyProjectWorkspace = () => {
   const emptyT = useTranslations("emptyProject");
+  const panelsT = useTranslations("panels");
   const timeT = useTranslations("time");
   const closedProjects = useIdeStore((s) => s.closedProjects);
   const chats = useIdeStore((s) => s.chats);
@@ -261,25 +255,15 @@ export const EmptyProjectWorkspace = () => {
                 <History className="size-3.5" />
                 {emptyT("recentlyClosed")}
               </div>
-              <InputGroup
-                className={cn("max-w-64", SEARCH_INPUT_GROUP_CLASS_NAME)}
-              >
-                <InputGroupInput
-                  aria-label={emptyT("searchRecentlyClosed")}
-                  autoComplete="off"
-                  className="text-sm"
-                  onChange={(event) =>
-                    setRecentProjectQuery(event.target.value)
-                  }
-                  placeholder={emptyT("searchRecentlyClosed")}
-                  spellCheck={false}
-                  type="search"
-                  value={recentProjectQuery}
-                />
-                <InputGroupAddon>
-                  <Search className="size-4 shrink-0 opacity-50" />
-                </InputGroupAddon>
-              </InputGroup>
+              <SearchInput
+                aria-label={emptyT("searchRecentlyClosed")}
+                autoComplete="off"
+                className="w-full min-w-0 max-w-64"
+                clearLabel={panelsT("clearSearch")}
+                onValueChange={setRecentProjectQuery}
+                placeholder={emptyT("searchRecentlyClosed")}
+                value={recentProjectQuery}
+              />
             </div>
             {filteredRecentProjects.length > 0 ? (
               <div

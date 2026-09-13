@@ -1,8 +1,7 @@
-import { Archive, FolderTree, FolderX, Search } from "lucide-react";
+import { Archive, FolderTree, FolderX } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SEARCH_INPUT_GROUP_CLASS_NAME } from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -11,12 +10,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { SearchInput } from "@/components/ui/search-input";
 import { Spinner } from "@/components/ui/spinner";
 import { StatusDot } from "@/components/ui/status-dot";
 import { cn } from "@/lib/utils";
@@ -97,6 +92,7 @@ export const ProjectSidebar = ({
   const locale = useLocale();
   const commonT = useTranslations("common");
   const projectsT = useTranslations("projects");
+  const panelsT = useTranslations("panels");
   const worktreeT = useTranslations("worktrees");
   const relativeTimeFormatter = useMemo(
     () =>
@@ -230,17 +226,13 @@ export const ProjectSidebar = ({
     >
       <div className="px-3 py-3">
         <p className="font-medium text-sm">{projectsT("chatHistory")}</p>
-        <InputGroup className={cn("mt-2", SEARCH_INPUT_GROUP_CLASS_NAME)}>
-          <InputGroupInput
-            className="text-sm"
-            onChange={(event) => setSearchQuery(event.target.value)}
-            placeholder={projectsT("searchHistory")}
-            value={searchQuery}
-          />
-          <InputGroupAddon>
-            <Search className="size-4 shrink-0 opacity-50" />
-          </InputGroupAddon>
-        </InputGroup>
+        <SearchInput
+          className="mt-2"
+          clearLabel={panelsT("clearSearch")}
+          onValueChange={setSearchQuery}
+          placeholder={projectsT("searchHistory")}
+          value={searchQuery}
+        />
       </div>
 
       <ScrollArea className="min-h-0 flex-1">

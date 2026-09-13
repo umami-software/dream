@@ -13,7 +13,6 @@ import {
   Save,
   Search,
   TextWrap,
-  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from "react";
@@ -41,6 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchInput } from "@/components/ui/search-input";
 import { Spinner } from "@/components/ui/spinner";
 import { getDesktopApi } from "@/lib/electron";
 import {
@@ -718,41 +718,20 @@ const ProjectFileTree = ({
       }}
     >
       <div className="shrink-0 px-3 pt-3 pb-2">
-        <div className="relative">
-          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground opacity-50" />
-          <input
-            aria-label={panelsT("searchFiles")}
-            className="h-8 w-full min-w-0 rounded-md border border-surface-200 bg-surface-50 py-1 pr-8 pl-[34px] text-foreground text-xs outline-none placeholder:text-muted-foreground focus-visible:border-input dark:border-surface-800 dark:bg-surface-900"
-            onChange={(event) => {
-              const value = event.currentTarget.value;
-              if (treeSearch.isOpen) {
-                treeSearch.setValue(value);
-              } else {
-                treeSearch.open(value);
-              }
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "Escape") {
-                event.preventDefault();
-                treeSearch.close();
-              }
-            }}
-            placeholder={panelsT("searchFiles")}
-            spellCheck={false}
-            type="text"
-            value={treeSearch.isOpen ? treeSearch.value : ""}
-          />
-          {treeSearch.isOpen && treeSearch.value ? (
-            <button
-              aria-label={panelsT("clearSearch")}
-              className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
-              onClick={() => treeSearch.close()}
-              type="button"
-            >
-              <X className="size-3.5" />
-            </button>
-          ) : null}
-        </div>
+        <SearchInput
+          aria-label={panelsT("searchFiles")}
+          clearLabel={panelsT("clearSearch")}
+          onClear={() => treeSearch.close()}
+          onValueChange={(value) => {
+            if (treeSearch.isOpen) {
+              treeSearch.setValue(value);
+            } else {
+              treeSearch.open(value);
+            }
+          }}
+          placeholder={panelsT("searchFiles")}
+          value={treeSearch.isOpen ? treeSearch.value : ""}
+        />
       </div>
       {nestedErrors.length > 0 ? (
         <div className="shrink-0 space-y-1 p-2 pb-0">
